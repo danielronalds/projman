@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/danielronalds/projman/controllers"
 	"github.com/danielronalds/projman/repositories"
 	"github.com/danielronalds/projman/services"
@@ -19,6 +22,6 @@ func main() {
 
 	c := controllers.NewOpenController(projects, fzf, tmux)
 	if err := c.HandleArgs(make([]string, 0)); err != nil {
-		panic(err.Error())
+		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
 	}
 }

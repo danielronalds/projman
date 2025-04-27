@@ -1,6 +1,9 @@
 package controllers
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type projectLister interface {
 	ListLocal() ([]string, error)
@@ -34,7 +37,7 @@ func (c OpenController) HandleArgs(args []string) error {
 	proj, err := c.fzf.Select(projects)
 	if err != nil {
 		// if an error occurs, we assuke fzf was Ctrl+c
-		return fmt.Errorf("no project selected", err.Error())
+		return errors.New("no project selected")
 	}
 
 	projPath, err := c.projects.GetPath(proj)

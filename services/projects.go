@@ -6,8 +6,8 @@ import (
 	"os"
 )
 
-type projectName string
-type projectPath string
+type projectName = string
+type projectPath = string
 
 type projectsConfig interface {
 	ProjectDirs() []string
@@ -47,8 +47,8 @@ func (s ProjectsService) ListLocal() ([]string, error) {
 
 		for _, entry := range contents {
 			if entry.IsDir() {
-				name := projectName(entry.Name())
-				path := projectPath(fmt.Sprintf("%v%v", dir, name))
+				name := entry.Name()
+				path := fmt.Sprintf("%v%v", dir, name)
 				s.localProjects[name] = path
 			}
 		}
@@ -58,18 +58,18 @@ func (s ProjectsService) ListLocal() ([]string, error) {
 }
 
 func (s ProjectsService) GetPath(project string) (string, error) {
-	path, ok := s.localProjects[projectName(project)]
+	path, ok := s.localProjects[project]
 	if !ok {
 		return "", errors.New("project not foumd")
 	}
 
-	return string(path), nil
+	return path, nil
 }
 
 func getProjectNames(m map[projectName]projectPath) []string {
 	keys := make([]string, 0)
 	for k, _ := range m {
-		keys = append(keys, string(k))
+		keys = append(keys, k)
 	}
 
 	return keys
