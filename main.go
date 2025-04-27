@@ -1,29 +1,24 @@
 package main
 
 import (
-	"fmt"
-	"os"
-	"os/exec"
-
+	"github.com/danielronalds/projman/controllers"
 	"github.com/danielronalds/projman/repositories"
 	"github.com/danielronalds/projman/services"
 )
 
+type controller interface {
+	HandleArgs(args []string) error
+}
+
 func main() {
 	config := repositories.NewConfigRepository()
 	
-	fzf := services.NewFzfService(config)
+	fzf := services.NewFzfService(&config)
+	projects := services.NewProjectsService(&config)
+	tmux := services.NewTmuxService()
 
-	output, _ := fzf.Select([]string{ "option one", "option two"})
-
-	fmt.Printf("Output: %v\n", output)
+	c := controllers.NewOpenController(projects, fzf, tmux)
+	if err := c.HandleArgs(make([]string, 0)); err != nil {
+		panic(err.Error())
+	}
 }
-
-func runTmux() {
-	cmd := exec.Command("tmux")
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.Run()
-}
-
