@@ -4,13 +4,19 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
+
+	"github.com/danielronalds/projman/repositories"
+	"github.com/danielronalds/projman/services"
 )
 
 func main() {
-	output := runFzf()
+	config := repositories.NewConfigRepository()
+	
+	fzf := services.NewFzfService(config)
+
+	output, _ := fzf.Select([]string{ "option one", "option two"})
+
 	fmt.Printf("Output: %v\n", output)
-	runTmux()
 }
 
 func runTmux() {
@@ -21,13 +27,3 @@ func runTmux() {
 	cmd.Run()
 }
 
-func runFzf() string {
-	cmd := exec.Command("fzf")
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	out, err := cmd.Output()
-	if err != nil {
-		panic(err)
-	}
-	return strings.TrimSpace(string(out))
-}
