@@ -17,7 +17,7 @@ func (r ConfigRepository) Layout() string {
 
 func (r ConfigRepository) ProjectDirs() []string {
 	return []string {
-		"/data/data/com.termux/files/home/Projects/",
-		"/data/data/com.termux/files/home/.config/",
+		"/home/danielr/Projects/",
+		"/home/danielr/.config/",
 	}
 }

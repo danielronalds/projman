@@ -13,15 +13,36 @@ type controller interface {
 	HandleArgs(args []string) error
 }
 
-func main() {
+func run(args []string) {
 	config := repositories.NewConfigRepository()
-	
+
 	fzf := services.NewFzfService(&config)
 	projects := services.NewProjectsService(&config)
 	tmux := services.NewTmuxService()
 
-	c := controllers.NewOpenController(projects, fzf, tmux)
-	if err := c.HandleArgs(make([]string, 0)); err != nil {
+	cmd := "local"
+	if len(args) > 0 {
+		cmd = args[0]
+	}
+
+	controllerMap := map[string]controller{
+		"local": controllers.NewOpenController(projects, fzf, tmux),
+	}
+
+	handler, ok := controllerMap[cmd]
+
+	if !ok {
+		fmt.Fprint(os.Stderr, "unknown command\n")
+		return
+	}
+
+	if err := handler.HandleArgs(args); err != nil {
 		fmt.Fprintf(os.Stderr, "%v\n", err.Error())
 	}
+}
+
+func main() {
+	args := os.Args[1:]
+
+	run(args)
 }
