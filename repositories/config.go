@@ -2,16 +2,27 @@ package repositories
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 )
 
+type template struct {
+	Name     string   `json:"name"`
+	Commands []string `json:"commands"`
+}
+
+func (t template) GetCommands() []string {
+	return t.Commands
+}
+
 type config struct {
-	Theme           string   `json:"theme"`
-	Layout          string   `json:"layout"`
-	ProjectDirs     []string `json:"projectDir"`
-	OpenNewProjects bool     `json:"openNewProjects"`
+	Theme           string     `json:"theme"`
+	Layout          string     `json:"layout"`
+	ProjectDirs     []string   `json:"projectDir"`
+	OpenNewProjects bool       `json:"openNewProjects"`
+	Templates       []template `json:"templates"`
 }
 
 type ConfigRepository struct {
@@ -24,6 +35,7 @@ func NewConfigRepository() ConfigRepository {
 		Layout:          "reverse",
 		ProjectDirs:     []string{"Projects/"},
 		OpenNewProjects: true,
+		Templates: make([]template, 0),
 	}
 
 	homeDir := getHomeDir()
@@ -64,6 +76,23 @@ func (r ConfigRepository) ProjectDirs() []string {
 
 func (r ConfigRepository) OpenNewProjects() bool {
 	return r.conf.OpenNewProjects
+}
+
+func (r ConfigRepository) TemplateNames() []string {
+	templates := make([]string, 0)
+	for _, tmpl := range r.conf.Templates {
+		templates = append(templates, tmpl.Name)
+	}
+	return templates
+}
+
+func (r ConfigRepository) GetTemplateCommands(tmpl string) ([]string, error) {
+	for _, t := range r.conf.Templates {
+		if t.Name == tmpl {
+			return t.Commands, nil
+		}
+	}
+	return make([]string, 0), errors.New("no template with that name exists")
 }
 
 // Helper function that gets the home dir without an err. If an err occurs, the program exits

@@ -20,7 +20,7 @@ func run(args []string) {
 	projects := services.NewProjectsService(config)
 	github := services.NewGithubService(config)
 	tmux := services.NewTmuxService()
-	creater := services.NewCreaterService()
+	creater := services.NewCreaterService(config)
 
 	cmd := "local"
 	if len(args) > 0 {

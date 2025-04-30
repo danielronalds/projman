@@ -9,10 +9,12 @@ import (
 type newConfig interface {
 	ProjectDirs() []string
 	OpenNewProjects() bool
+	TemplateNames() []string
 }
 
 type projectCreator interface {
 	CreateProject(name, projectDir string) (projectPath, error)
+	CreateProjectWithTemplate(name, projectDir, tmpl string) (projectPath, error)
 }
 
 type NewController struct {
@@ -38,11 +40,11 @@ func (c NewController) HandleArgs(args []string) error {
 		var err error
 		projectDir, err = c.fzf.Select(c.config.ProjectDirs())
 		if err != nil {
-			return errors.New("no clone dir selected")
+			return errors.New("no project dir selected")
 		}
 	}
 
-	projPath, err := c.creater.CreateProject(projectName, projectDir)
+	projPath, err := c.handleCreateProject(projectName, projectDir)
 	if err != nil {
 		return fmt.Errorf("unable to create project: %v", err.Error())
 	}
@@ -52,4 +54,25 @@ func (c NewController) HandleArgs(args []string) error {
 	}
 
 	return nil
+}
+
+func (c NewController) handleCreateProject(projectName, projectDir string) (string, error) {
+	if len(c.config.TemplateNames()) == 0 {
+		return c.creater.CreateProject(projectName, projectDir)
+	}
+
+	noTemplate := "No template"
+
+	templates := append(c.config.TemplateNames(), noTemplate)
+
+	tmpl, err := c.fzf.Select(templates)
+	if err != nil {
+		return "", err
+	}
+
+	if tmpl == noTemplate {
+		return c.creater.CreateProject(projectName, projectDir)
+	}
+
+	return c.creater.CreateProjectWithTemplate(projectName, projectDir, tmpl)
 }

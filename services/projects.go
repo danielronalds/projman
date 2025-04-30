@@ -49,7 +49,11 @@ func (s ProjectsService) ListProjects() ([]string, error) {
 			if entry.IsDir() {
 				name := entry.Name()
 				path := fmt.Sprintf("%v%v", dir, name)
-				s.localProjects[name] = path
+
+				_, alreadyExisting := s.localProjects[name]
+				if !alreadyExisting {
+					s.localProjects[name] = path
+				}
 			}
 		}
 	}
