@@ -49,16 +49,16 @@ func (s GithubService) ListProjects() ([]projectName, error) {
 	return projects, nil
 }
 
-func (s GithubService) Clone(name string) (projectPath, error) {
+func (s GithubService) Clone(name, dir string) (projectPath, error) {
 	cmd := exec.Command("gh", "repo", "clone", name)
 
-	cmd.Dir = s.config.ProjectDir()
+	cmd.Dir = dir
 
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
-	projPath := fmt.Sprintf("%v%v", s.config.ProjectDir(), name)
+	projPath := fmt.Sprintf("%v%v", dir, name)
 
 	return projPath, cmd.Run()
 }

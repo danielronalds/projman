@@ -10,7 +10,7 @@ import (
 type config struct {
 	Theme      string `json:"theme"`
 	Layout     string `json:"layout"`
-	ProjectDir string `json:"projectDir"`
+	ProjectDirs []string `json:"projectDir"`
 }
 
 type ConfigRepository struct {
@@ -21,7 +21,7 @@ func NewConfigRepository() ConfigRepository {
 	conf := config{
 		Theme:      "bw",
 		Layout:     "reverse",
-		ProjectDir: "Projects/",
+		ProjectDirs: []string{"Projects/"},
 	}
 
 	homeDir := getHomeDir()
@@ -48,12 +48,16 @@ func (r ConfigRepository) Layout() string {
 	return r.conf.Layout
 }
 
-func (r ConfigRepository) ProjectDir() string {
+func (r ConfigRepository) ProjectDirs() []string {
 	homeDir := getHomeDir()
 
-	normedDir := strings.TrimSuffix(r.conf.ProjectDir, "/")
+	normedDirs := make([]string, 0)
+	for _, dir := range r.conf.ProjectDirs {
+		normedDir := strings.TrimSuffix(dir, "/")
+		normedDirs = append(normedDirs, fmt.Sprintf("%v/%v/", homeDir, normedDir))
+	}
 
-	return fmt.Sprintf("%v/%v/", homeDir, normedDir)
+	return normedDirs
 }
 
 // Helper function that gets the home dir without an err. If an err occurs, the program exits

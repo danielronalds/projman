@@ -28,7 +28,7 @@ func run(args []string) {
 
 	controllerMap := map[string]controller{
 		"local":  controllers.NewOpenController(projects, fzf, tmux),
-		"remote": controllers.NewRemoteController(github, projects, fzf, tmux),
+		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, &config),
 	}
 
 	handler, ok := controllerMap[cmd]

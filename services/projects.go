@@ -10,7 +10,7 @@ type projectName = string
 type projectPath = string
 
 type projectsConfig interface {
-	ProjectDir() string
+	ProjectDirs() []string
 }
 
 type ProjectsService struct {
@@ -35,22 +35,22 @@ func (s ProjectsService) ListProjects() ([]string, error) {
 		return getProjectNames(s.localProjects), nil
 	}
 
-	dir := s.config.ProjectDir()
+	for _, dir := range s.config.ProjectDirs() {
+		if len(dir) == 0 {
+			return make([]string, 0), errors.New("invalid project directory")
+		}
 
-	if len(dir) == 0 {
-		return make([]string, 0), errors.New("invalid project directory")
-	}
+		contents, err := os.ReadDir(dir)
+		if err != nil {
+			return nil, err
+		}
 
-	contents, err := os.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, entry := range contents {
-		if entry.IsDir() {
-			name := entry.Name()
-			path := fmt.Sprintf("%v%v", dir, name)
-			s.localProjects[name] = path
+		for _, entry := range contents {
+			if entry.IsDir() {
+				name := entry.Name()
+				path := fmt.Sprintf("%v%v", dir, name)
+				s.localProjects[name] = path
+			}
 		}
 	}
 

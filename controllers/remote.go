@@ -8,7 +8,7 @@ import (
 type projectPath = string
 
 type projectCloner interface {
-	Clone(name string) (projectPath, error)
+	Clone(name, dir string) (projectPath, error)
 }
 
 type localProjectsIndex interface {
@@ -20,15 +20,20 @@ type remoteProjectManager interface {
 	projectCloner
 }
 
+type remoteConfig interface {
+	ProjectDirs() []string
+}
+
 type RemoteController struct {
 	remote remoteProjectManager
 	local  localProjectsIndex
 	fzf    selecter
 	tmux   sessionLauncher
+	config remoteConfig
 }
 
-func NewRemoteController(remote remoteProjectManager, local localProjectsIndex, fzf selecter, tmux sessionLauncher) RemoteController {
-	return RemoteController{remote, local, fzf, tmux}
+func NewRemoteController(remote remoteProjectManager, local localProjectsIndex, fzf selecter, tmux sessionLauncher, config remoteConfig) RemoteController {
+	return RemoteController{remote, local, fzf, tmux, config}
 }
 
 func (c RemoteController) HandleArgs(args []string) error {
@@ -52,7 +57,15 @@ func (c RemoteController) HandleArgs(args []string) error {
 		return errors.New("no project selected")
 	}
 
-	projPath, err := c.remote.Clone(proj)
+	cloneDir := c.config.ProjectDirs()[0]
+	if len(c.config.ProjectDirs()) > 1 {
+		cloneDir, err = c.fzf.Select(c.config.ProjectDirs())
+		if err != nil {
+			return errors.New("no clone dir selected")
+		}
+	}
+
+	projPath, err := c.remote.Clone(proj, cloneDir)
 	if err != nil {
 		return fmt.Errorf("unable to get clone project: %v", err.Error())
 	}
