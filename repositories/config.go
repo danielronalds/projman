@@ -8,8 +8,8 @@ import (
 )
 
 type config struct {
-	Theme      string `json:"theme"`
-	Layout     string `json:"layout"`
+	Theme       string   `json:"theme"`
+	Layout      string   `json:"layout"`
 	ProjectDirs []string `json:"projectDir"`
 }
 
@@ -19,8 +19,8 @@ type ConfigRepository struct {
 
 func NewConfigRepository() ConfigRepository {
 	conf := config{
-		Theme:      "bw",
-		Layout:     "reverse",
+		Theme:       "bw",
+		Layout:      "reverse",
 		ProjectDirs: []string{"Projects/"},
 	}
 

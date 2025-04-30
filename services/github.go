@@ -7,7 +7,7 @@ import (
 	"os/exec"
 )
 
-type GithubService struct{
+type GithubService struct {
 	config projectsConfig
 }
 

@@ -31,7 +31,7 @@ func (s TmuxService) LaunchSession(name, dir string) error {
 
 func (s TmuxService) createSession(name, dir string) error {
 	cmd := exec.Command(
-		"tmux", 
+		"tmux",
 		"new",
 		"-c",
 		dir,

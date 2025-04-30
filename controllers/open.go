@@ -28,11 +28,11 @@ type openProjectLister interface {
 
 type OpenController struct {
 	projects openProjectLister
-	fzf selecter
-	tmux sessionLauncher
+	fzf      selecter
+	tmux     sessionLauncher
 }
 
-func NewOpenController(projects openProjectLister, fzf selecter, tmux sessionLauncher) OpenController { 
+func NewOpenController(projects openProjectLister, fzf selecter, tmux sessionLauncher) OpenController {
 	return OpenController{projects, fzf, tmux}
 }
 
@@ -41,7 +41,7 @@ func (c OpenController) HandleArgs(args []string) error {
 	if err != nil {
 		return fmt.Errorf("unable to fetch local projects: %v", err.Error())
 	}
-	
+
 	proj, err := c.fzf.Select(projects)
 	if err != nil {
 		// if an error occurs, we assume fzf was Ctrl+c

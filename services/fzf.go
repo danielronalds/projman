@@ -17,7 +17,7 @@ type FzfService struct {
 }
 
 func NewFzfService(config fzfConfig) FzfService {
-	return FzfService { config }
+	return FzfService{config}
 }
 
 func (s FzfService) layout() string {
@@ -49,7 +49,7 @@ func (s FzfService) Select(options []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	
+
 	return strings.TrimSpace(string(out)), nil
 }
 
