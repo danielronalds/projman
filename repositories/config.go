@@ -8,9 +8,10 @@ import (
 )
 
 type config struct {
-	Theme       string   `json:"theme"`
-	Layout      string   `json:"layout"`
-	ProjectDirs []string `json:"projectDir"`
+	Theme           string   `json:"theme"`
+	Layout          string   `json:"layout"`
+	ProjectDirs     []string `json:"projectDir"`
+	OpenNewProjects bool     `json:"openNewProjects"`
 }
 
 type ConfigRepository struct {
@@ -19,9 +20,10 @@ type ConfigRepository struct {
 
 func NewConfigRepository() ConfigRepository {
 	conf := config{
-		Theme:       "bw",
-		Layout:      "reverse",
-		ProjectDirs: []string{"Projects/"},
+		Theme:           "bw",
+		Layout:          "reverse",
+		ProjectDirs:     []string{"Projects/"},
+		OpenNewProjects: true,
 	}
 
 	homeDir := getHomeDir()
@@ -58,6 +60,10 @@ func (r ConfigRepository) ProjectDirs() []string {
 	}
 
 	return normedDirs
+}
+
+func (r ConfigRepository) OpenNewProjects() bool {
+	return r.conf.OpenNewProjects
 }
 
 // Helper function that gets the home dir without an err. If an err occurs, the program exits

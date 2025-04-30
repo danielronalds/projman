@@ -16,10 +16,11 @@ type controller interface {
 func run(args []string) {
 	config := repositories.NewConfigRepository()
 
-	fzf := services.NewFzfService(&config)
-	projects := services.NewProjectsService(&config)
-	github := services.NewGithubService(&config)
+	fzf := services.NewFzfService(config)
+	projects := services.NewProjectsService(config)
+	github := services.NewGithubService(config)
 	tmux := services.NewTmuxService()
+	creater := services.NewCreaterService()
 
 	cmd := "local"
 	if len(args) > 0 {
@@ -28,7 +29,8 @@ func run(args []string) {
 
 	controllerMap := map[string]controller{
 		"local":  controllers.NewOpenController(projects, fzf, tmux),
-		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, &config),
+		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, config),
+		"new":    controllers.NewNewController(fzf, creater, tmux, config),
 	}
 
 	handler, ok := controllerMap[cmd]
