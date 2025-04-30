@@ -10,7 +10,7 @@ type projectName = string
 type projectPath = string
 
 type projectsConfig interface {
-	ProjectDirs() []string
+	ProjectDir() string
 }
 
 type ProjectsService struct {
@@ -30,27 +30,27 @@ func NewProjectsService(config projectsConfig) ProjectsService {
 	}
 }
 
-func (s ProjectsService) ListLocal() ([]string, error) {
+func (s ProjectsService) ListProjects() ([]string, error) {
 	if len(s.localProjects) != 0 {
 		return getProjectNames(s.localProjects), nil
 	}
 
-	for _, dir := range s.config.ProjectDirs() {
-		if len(dir) == 0 {
-			continue
-		}
+	dir := s.config.ProjectDir()
 
-		contents, err := os.ReadDir(dir)
-		if err != nil {
-			return nil, err
-		}
+	if len(dir) == 0 {
+		return make([]string, 0), errors.New("invalid project directory")
+	}
 
-		for _, entry := range contents {
-			if entry.IsDir() {
-				name := entry.Name()
-				path := fmt.Sprintf("%v%v", dir, name)
-				s.localProjects[name] = path
-			}
+	contents, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, entry := range contents {
+		if entry.IsDir() {
+			name := entry.Name()
+			path := fmt.Sprintf("%v%v", dir, name)
+			s.localProjects[name] = path
 		}
 	}
 
@@ -60,7 +60,7 @@ func (s ProjectsService) ListLocal() ([]string, error) {
 func (s ProjectsService) GetPath(project string) (string, error) {
 	path, ok := s.localProjects[project]
 	if !ok {
-		return "", errors.New("project not foumd")
+		return "", errors.New("project not found")
 	}
 
 	return path, nil
@@ -68,7 +68,7 @@ func (s ProjectsService) GetPath(project string) (string, error) {
 
 func getProjectNames(m map[projectName]projectPath) []string {
 	keys := make([]string, 0)
-	for k, _ := range m {
+	for k := range m {
 		keys = append(keys, k)
 	}
 

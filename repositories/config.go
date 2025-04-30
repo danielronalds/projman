@@ -15,9 +15,6 @@ func (r ConfigRepository) Layout() string {
 	return "reverse"
 }
 
-func (r ConfigRepository) ProjectDirs() []string {
-	return []string {
-		"/home/danielr/Projects/",
-		"/home/danielr/.config/",
-	}
+func (r ConfigRepository) ProjectDir() string {
+	return "/home/danielr/Projects/"
 }
