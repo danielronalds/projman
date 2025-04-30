@@ -11,6 +11,10 @@ type projectCloner interface {
 	Clone(name string) (projectPath, error)
 }
 
+type localProjectsIndex interface {
+	IsLocalProject(project string) bool
+}
+
 type remoteProjectManager interface {
 	projectLister
 	projectCloner
@@ -18,23 +22,31 @@ type remoteProjectManager interface {
 
 type RemoteController struct {
 	remote remoteProjectManager
-	fzf selecter
-	tmux sessionLauncher
+	local  localProjectsIndex
+	fzf    selecter
+	tmux   sessionLauncher
 }
 
-
-func NewRemoteController(remote remoteProjectManager, fzf selecter, tmux sessionLauncher) RemoteController { 
-	return RemoteController{remote, fzf, tmux}
+func NewRemoteController(remote remoteProjectManager, local localProjectsIndex, fzf selecter, tmux sessionLauncher) RemoteController {
+	return RemoteController{remote, local, fzf, tmux}
 }
 
 func (c RemoteController) HandleArgs(args []string) error {
 	fmt.Println("fetching projects...")
-	projects, err := c.remote.ListProjects()
+	remoteProjects, err := c.remote.ListProjects()
 	if err != nil {
 		return fmt.Errorf("unable to fetch github projects: %v", err.Error())
 	}
-	
-	proj, err := c.fzf.Select(projects)
+
+	filteredRemoteProjects := make([]string, 0)
+	for _, project := range remoteProjects {
+		if c.local.IsLocalProject(project) {
+			continue
+		}
+		filteredRemoteProjects = append(filteredRemoteProjects, project)
+	}
+
+	proj, err := c.fzf.Select(filteredRemoteProjects)
 	if err != nil {
 		// if an error occurs, we assume fzf was Ctrl+c
 		return errors.New("no project selected")
