@@ -42,6 +42,10 @@ func (s CreaterService) CreateProjectWithTemplate(name, projectDir, tmpl string)
 		cmd := exec.Command("bash", "-c", tmplCmd)
 
 		cmd.Dir = projPath
+
+		cmd.Env = os.Environ()
+		cmd.Env = append(cmd.Env, fmt.Sprintf("PROJMAN_PROJECT_NAME=%v", name))
+
 		cmd.Stdin = os.Stdin
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
