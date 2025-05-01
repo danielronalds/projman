@@ -35,7 +35,7 @@ func NewConfigRepository() ConfigRepository {
 		Layout:          "reverse",
 		ProjectDirs:     []string{"Projects/"},
 		OpenNewProjects: true,
-		Templates: make([]template, 0),
+		Templates:       make([]template, 0),
 	}
 
 	homeDir := getHomeDir()
