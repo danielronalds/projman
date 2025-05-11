@@ -12,6 +12,7 @@ Commands
   new       Create a new project
   local     Open a project currently on your machine
   remote    Open a project from github
+  active    Open an existing session
   help      Show this menu
 `
 

@@ -1,5 +1,7 @@
 package main
 
+// TODO: add fast open a specific project with `projman <project-name>` would only work if project hasn't got same name as a subcommand
+
 import (
 	"fmt"
 	"os"
@@ -28,9 +30,10 @@ func run(args []string) {
 	}
 
 	controllerMap := map[string]controller{
+		"new":    controllers.NewNewController(fzf, creater, tmux, config),
 		"local":  controllers.NewOpenController(projects, fzf, tmux),
 		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, config),
-		"new":    controllers.NewNewController(fzf, creater, tmux, config),
+		"active": controllers.NewActiveController(projects, fzf, tmux),
 		"help":   controllers.NewHelpController(),
 	}
 
