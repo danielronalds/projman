@@ -1,7 +1,5 @@
 package main
 
-// TODO: add fast open a specific project with `projman <project-name>` would only work if project hasn't got same name as a subcommand
-
 import (
 	"fmt"
 	"os"
@@ -40,8 +38,7 @@ func run(args []string) {
 	handler, ok := controllerMap[cmd]
 
 	if !ok {
-		fmt.Fprint(os.Stderr, "unknown command\n")
-		return
+		handler = controllers.NewDirectOpenController(projects, fzf, tmux)
 	}
 
 	if err := handler.HandleArgs(args); err != nil {

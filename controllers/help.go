@@ -4,9 +4,11 @@ import "fmt"
 
 const HELP_MENU = `projman v%v
 
+Usage: projman [command | project]
+
 A cli tool for managing projects on your local machine.
 
-To open a project, run projman with no arguments
+To select and open a project, run projman with no arguments
 
 Commands
   new       Create a new project
@@ -16,7 +18,7 @@ Commands
   help      Show this menu
 `
 
-const VERSION = "0.1.0"
+const VERSION = "0.2.0"
 
 type HelpController struct{}
 

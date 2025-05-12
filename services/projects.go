@@ -62,6 +62,11 @@ func (s ProjectsService) ListProjects() ([]string, error) {
 }
 
 func (s ProjectsService) GetPath(project string) (string, error) {
+	if len(s.localProjects) == 0 {
+		// Fetching the projects if they haven't already been fetched
+		s.ListProjects()
+	}
+
 	path, ok := s.localProjects[project]
 	if !ok {
 		return "", errors.New("project not found")
