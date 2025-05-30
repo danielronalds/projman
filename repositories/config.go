@@ -20,7 +20,7 @@ func (t template) GetCommands() []string {
 type config struct {
 	Theme           string     `json:"theme"`
 	Layout          string     `json:"layout"`
-	ProjectDirs     []string   `json:"projectDir"`
+	ProjectDirs     []string   `json:"projectDirs"`
 	OpenNewProjects bool       `json:"openNewProjects"`
 	Templates       []template `json:"templates"`
 }
