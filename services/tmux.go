@@ -19,7 +19,16 @@ func (s TmuxService) ListActiveSessions() ([]string, error) {
 		return make([]string, 0), err
 	}
 
-	return strings.Split(string(out), "\n"), nil
+	sessions := make([]string, 0)
+
+	for _, session := range strings.Split(string(out), "\n") {
+		if strings.TrimSpace(session) != "" {
+			sessions = append(sessions, session)
+		}
+	}
+
+
+	return sessions, nil
 }
 
 func (s TmuxService) LaunchSession(name, dir string) error {
