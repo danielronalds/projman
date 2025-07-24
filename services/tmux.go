@@ -54,17 +54,17 @@ func (s TmuxService) OpenActiveSession(name string) error {
 }
 
 func (s TmuxService) createSession(name, dir string) error {
-	cmd := exec.Command("tmux", "new", "-c", dir, "-s", fmt.Sprintf("%s:1", name), "-n", "CLI", "-d")
+	cmd := exec.Command("tmux", "new", "-c", dir, "-s", name, "-n", "CLI", "-d")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", fmt.Sprintf("%s:2", name), "-n", "Code")
+	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", name, "-n", "Code")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", fmt.Sprintf("%s:3", name), "-n", "Server")
+	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", name, "-n", "Server")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
