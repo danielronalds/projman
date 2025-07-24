@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -26,7 +27,6 @@ func (s TmuxService) ListActiveSessions() ([]string, error) {
 			sessions = append(sessions, session)
 		}
 	}
-
 
 	return sessions, nil
 }
@@ -54,7 +54,22 @@ func (s TmuxService) OpenActiveSession(name string) error {
 }
 
 func (s TmuxService) createSession(name, dir string) error {
-	cmd := exec.Command("tmux", "new", "-c", dir, "-s", name, "-d")
+	cmd := exec.Command("tmux", "new", "-c", dir, "-s", fmt.Sprintf("%s:1", name), "-n", "CLI", "-d")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", fmt.Sprintf("%s:2", name), "-n", "Code")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", fmt.Sprintf("%s:3", name), "-n", "Server")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	cmd = exec.Command("tmux", "select-window", "-t", fmt.Sprintf("%s:1", name))
 	return cmd.Run()
 }
 
