@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/danielronalds/projman/controllers"
-	"github.com/danielronalds/projman/repositories"
-	"github.com/danielronalds/projman/services"
+	"github.com/danielronalds/projman/internal/controllers"
+	"github.com/danielronalds/projman/internal/repositories"
+	"github.com/danielronalds/projman/internal/services"
 )
 
 type controller interface {
