@@ -1,16 +1,24 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 )
 
-type TmuxService struct{}
+type tmuxConfig interface {
+	SessionWindows() []string
+	StartingWindow() int
+}
 
-func NewTmuxService() TmuxService {
-	return TmuxService{}
+type TmuxService struct {
+	config tmuxConfig
+}
+
+func NewTmuxService(config tmuxConfig) TmuxService {
+	return TmuxService{config}
 }
 
 func (s TmuxService) ListActiveSessions() ([]string, error) {
@@ -22,7 +30,7 @@ func (s TmuxService) ListActiveSessions() ([]string, error) {
 
 	sessions := make([]string, 0)
 
-	for _, session := range strings.Split(string(out), "\n") {
+	for session := range strings.SplitSeq(string(out), "\n") {
 		if strings.TrimSpace(session) != "" {
 			sessions = append(sessions, session)
 		}
@@ -54,22 +62,27 @@ func (s TmuxService) OpenActiveSession(name string) error {
 }
 
 func (s TmuxService) createSession(name, dir string) error {
-	cmd := exec.Command("tmux", "new", "-c", dir, "-s", name, "-n", "CLI", "-d")
+	if len(s.config.SessionWindows()) == 0 {
+		return errors.New("config needs to define at least one window")
+	}
+
+	windows := s.config.SessionWindows()
+
+	cmd := exec.Command("tmux", "new", "-c", dir, "-s", name, "-n", windows[0], "-d")
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 
-	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", name, "-n", "Code")
-	if err := cmd.Run(); err != nil {
-		return err
+	for _, window := range windows[1:] {
+		cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", name, "-n", window)
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 	}
 
-	cmd = exec.Command("tmux", "new-window", "-c", dir, "-t", name, "-n", "Server")
-	if err := cmd.Run(); err != nil {
-		return err
-	}
+	startingWindow := s.config.StartingWindow()
 
-	cmd = exec.Command("tmux", "select-window", "-t", fmt.Sprintf("%s:1", name))
+	cmd = exec.Command("tmux", "select-window", "-t", fmt.Sprintf("%s:%v", name, startingWindow))
 	return cmd.Run()
 }
 

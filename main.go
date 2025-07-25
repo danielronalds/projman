@@ -19,7 +19,7 @@ func run(args []string) {
 	fzf := services.NewFzfService(config)
 	projects := services.NewProjectsService(config)
 	github := services.NewGithubService(config)
-	tmux := services.NewTmuxService()
+	tmux := services.NewTmuxService(config)
 	creater := services.NewCreaterService(config)
 
 	cmd := "local"

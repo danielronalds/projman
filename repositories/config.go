@@ -13,16 +13,22 @@ type template struct {
 	Commands []string `json:"commands"`
 }
 
+type sessionLayout struct {
+	Windows        []string `json:"windows"`
+	StartingWindow int      `json:"starting_window"`
+}
+
 func (t template) GetCommands() []string {
 	return t.Commands
 }
 
 type config struct {
-	Theme           string     `json:"theme"`
-	Layout          string     `json:"layout"`
-	ProjectDirs     []string   `json:"projectDirs"`
-	OpenNewProjects bool       `json:"openNewProjects"`
-	Templates       []template `json:"templates"`
+	Theme           string        `json:"theme"`
+	Layout          string        `json:"layout"`
+	ProjectDirs     []string      `json:"projectDirs"`
+	OpenNewProjects bool          `json:"openNewProjects"`
+	Templates       []template    `json:"templates"`
+	SessionLayout   sessionLayout `json:"session_layout"`
 }
 
 type ConfigRepository struct {
@@ -36,6 +42,10 @@ func NewConfigRepository() ConfigRepository {
 		ProjectDirs:     []string{"Projects/"},
 		OpenNewProjects: true,
 		Templates:       make([]template, 0),
+		SessionLayout: sessionLayout{
+			Windows:        []string{"CLI", "Code", "Server"},
+			StartingWindow: 2,
+		},
 	}
 
 	homeDir := getHomeDir()
@@ -93,6 +103,14 @@ func (r ConfigRepository) GetTemplateCommands(tmpl string) ([]string, error) {
 		}
 	}
 	return make([]string, 0), errors.New("no template with that name exists")
+}
+
+func (r ConfigRepository) SessionWindows() []string {
+	return r.conf.SessionLayout.Windows
+}
+
+func (r ConfigRepository) StartingWindow() int {
+	return r.conf.SessionLayout.StartingWindow
 }
 
 // Helper function that gets the home dir without an err. If an err occurs, the program exits
