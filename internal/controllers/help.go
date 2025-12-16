@@ -15,6 +15,7 @@ Commands
   local     Open a project currently on your machine
   remote    Open a project from github
   active    Open an existing session
+  health    Verify required dependencies are installed
   help      Show this menu
 `
 

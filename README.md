@@ -23,6 +23,8 @@ dev projects with integrated tmux session management.
 - `gh` for remote repository management
 - `git` for repository operations
 
+These can be checked using the `health` command mentioned below
+
 ### Install from source
 
 ```console
@@ -53,6 +55,7 @@ Commands
   local     Open a project currently on your machine
   remote    Open a project from github
   active    Open an existing session
+  health    Verify required dependencies are installed
   help      Show this menu
 ```
 

@@ -21,6 +21,7 @@ func run(args []string) {
 	github := services.NewGithubService(config)
 	tmux := services.NewTmuxService(config)
 	creater := services.NewCreaterService(config)
+	health := services.NewHealthService()
 
 	cmd := "local"
 	if len(args) > 0 {
@@ -33,6 +34,7 @@ func run(args []string) {
 		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, config),
 		"active": controllers.NewActiveController(projects, fzf, tmux),
 		"help":   controllers.NewHelpController(),
+		"health": controllers.NewHealthController(health),
 	}
 
 	handler, ok := controllerMap[cmd]
