@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strings"
 )
 
 type GithubService struct {
@@ -50,15 +52,26 @@ func (s GithubService) ListProjects() ([]projectName, error) {
 }
 
 func (s GithubService) Clone(name, dir string) (projectPath, error) {
-	cmd := exec.Command("gh", "repo", "clone", name)
+	return s.clone([]string{"repo", "clone", name}, dir, name)
+}
+
+func (s GithubService) CloneURL(target, dir string) (projectPath, error) {
+	args := []string{"repo", "clone", target}
+
+	repoName := filepath.Base(strings.TrimSuffix(strings.TrimSuffix(target, ".git"), "/"))
+	return s.clone(args, dir, repoName)
+}
+
+func (s GithubService) clone(args []string, dir, repoName string) (projectPath, error) {
+	cmd := exec.Command("gh", args...)
 
 	cmd.Dir = dir
-
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
-	projPath := fmt.Sprintf("%v%v", dir, name)
+	cleanName := strings.TrimSuffix(repoName, ".git")
+	projPath := fmt.Sprintf("%v%v", dir, cleanName)
 
 	return projPath, cmd.Run()
 }

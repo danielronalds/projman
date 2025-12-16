@@ -54,6 +54,7 @@ Commands
   new       Create a new project
   local     Open a project currently on your machine
   remote    Open a project from github
+  clone     Clone any git URL into a project dir
   active    Open an existing session
   health    Verify required dependencies are installed
   help      Show this menu

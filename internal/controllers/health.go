@@ -18,7 +18,7 @@ type HealthController struct {
 }
 
 func NewHealthController(healthService healthChecker) HealthController {
-	deps := []string{ "go", "fzf", "tmux", "gh", "git" }
+	deps := []string{"go", "fzf", "tmux", "gh", "git"}
 
 	return HealthController{healthService: healthService, dependencies: deps}
 }
