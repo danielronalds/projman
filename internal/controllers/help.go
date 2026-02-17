@@ -16,6 +16,7 @@ Commands
   remote    Open a project from github
   clone     Clone any git url to a project dir
   active    Open an existing session
+  config    Open the projman config in your editor
   health    Verify required dependencies are installed
   help      Show this menu
 `

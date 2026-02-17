@@ -34,6 +34,7 @@ func run(args []string) {
 		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, config),
 		"clone":  controllers.NewCloneController(github, fzf, tmux, config),
 		"active": controllers.NewActiveController(projects, fzf, tmux),
+		"config": controllers.NewConfigController(config),
 		"help":   controllers.NewHelpController(),
 		"health": controllers.NewHealthController(health),
 	}
