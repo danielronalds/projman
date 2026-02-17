@@ -9,7 +9,7 @@ dev projects with integrated tmux session management.
 - **Project Management**: Create and open projects from local directories or GitHub repositories
 - **Tmux Integration**: Automatically manage tmux sessions for your projects
 - **Project Templates**: Use customizable templates when creating new projects
-- **FZF Integration**: Interactive project selection using fuzzy finding
+- **Fuzzy Finder**: Built-in interactive fuzzy finding for project selection
 - **GitHub Integration**: Browse, clone, and open remote repositories
 - **Session Management**: Manage active tmux sessions
 
@@ -18,7 +18,6 @@ dev projects with integrated tmux session management.
 ### Prerequisites
 
 - Go 1.24.1 or later
-- `fzf` for interactive selection
 - `tmux` for session management
 - `gh` for remote repository management
 - `git` for repository operations
@@ -68,7 +67,7 @@ projman uses a JSON configuration file located at `~/.config/projman/config.json
 
 ```json
 {
-  "theme": "bw",
+  "theme": "default",
   "layout": "reverse",
   "projectDirs": ["Projects/"],
   "openNewProjects": true,
@@ -84,8 +83,8 @@ projman uses a JSON configuration file located at `~/.config/projman/config.json
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `theme` | string | `"bw"` | FZF theme |
-| `layout` | string | `"reverse"` | FZF layout |
+| `theme` | string | `"default"` | Selector theme preset (`default`, `bw`, `minimal`) |
+| `layout` | string | `"reverse"` | Selector input position (`reverse` = top, `default` = bottom) |
 | `projectDirs` | array | `["Projects/"]` | Directories to search for projects (relative to home directory) |
 | `openNewProjects` | boolean | `true` | Whether to automatically open new projects in tmux |
 | `templates` | array | `[]` | Project templates with commands to run |

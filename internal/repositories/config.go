@@ -37,7 +37,7 @@ type ConfigRepository struct {
 
 func NewConfigRepository() ConfigRepository {
 	conf := config{
-		Theme:           "bw",
+		Theme:           "default",
 		Layout:          "reverse",
 		ProjectDirs:     []string{"Projects/"},
 		OpenNewProjects: true,

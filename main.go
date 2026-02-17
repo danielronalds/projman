@@ -16,7 +16,7 @@ type controller interface {
 func run(args []string) {
 	config := repositories.NewConfigRepository()
 
-	selector := services.NewSelectService()
+	selector := services.NewSelectService(config)
 	projects := services.NewProjectsService(config)
 	github := services.NewGithubService(config)
 	tmux := services.NewTmuxService(config)
