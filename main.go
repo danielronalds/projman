@@ -16,7 +16,7 @@ type controller interface {
 func run(args []string) {
 	config := repositories.NewConfigRepository()
 
-	fzf := services.NewFzfService(config)
+	selector := services.NewSelectService(config)
 	projects := services.NewProjectsService(config)
 	github := services.NewGithubService(config)
 	tmux := services.NewTmuxService(config)
@@ -29,11 +29,11 @@ func run(args []string) {
 	}
 
 	controllerMap := map[string]controller{
-		"new":    controllers.NewNewController(fzf, creater, tmux, config),
-		"local":  controllers.NewOpenController(projects, fzf, tmux),
-		"remote": controllers.NewRemoteController(github, projects, fzf, tmux, config),
-		"clone":  controllers.NewCloneController(github, fzf, tmux, config),
-		"active": controllers.NewActiveController(projects, fzf, tmux),
+		"new":    controllers.NewNewController(selector, creater, tmux, config),
+		"local":  controllers.NewOpenController(projects, selector, tmux),
+		"remote": controllers.NewRemoteController(github, projects, selector, tmux, config),
+		"clone":  controllers.NewCloneController(github, selector, tmux, config),
+		"active": controllers.NewActiveController(projects, selector, tmux),
 		"config": controllers.NewConfigController(config),
 		"help":   controllers.NewHelpController(),
 		"health": controllers.NewHealthController(health),
@@ -42,7 +42,7 @@ func run(args []string) {
 	handler, ok := controllerMap[cmd]
 
 	if !ok {
-		handler = controllers.NewDirectOpenController(projects, fzf, tmux)
+		handler = controllers.NewDirectOpenController(projects, selector, tmux)
 	}
 
 	if err := handler.HandleArgs(args); err != nil {
