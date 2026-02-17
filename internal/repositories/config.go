@@ -113,6 +113,11 @@ func (r ConfigRepository) StartingWindow() int {
 	return r.conf.SessionLayout.StartingWindow
 }
 
+func (r ConfigRepository) ConfigFilePath() string {
+	homeDir := getHomeDir()
+	return fmt.Sprintf("%v/.config/projman/config.json", homeDir)
+}
+
 // Helper function that gets the home dir without an err. If an err occurs, the program exits
 func getHomeDir() string {
 	homeDir, err := os.UserHomeDir()
