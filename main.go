@@ -22,6 +22,7 @@ func run(args []string) {
 	tmux := services.NewTmuxService(config)
 	creater := services.NewCreaterService(config)
 	health := services.NewHealthService()
+	git := services.NewGitService()
 
 	cmd := "local"
 	if len(args) > 0 {
@@ -35,6 +36,7 @@ func run(args []string) {
 		"clone":  controllers.NewCloneController(github, selector, tmux, config),
 		"active": controllers.NewActiveController(projects, selector, tmux),
 		"config": controllers.NewConfigController(config),
+		"rm":     controllers.NewRmController(projects, selector, git),
 		"help":   controllers.NewHelpController(),
 		"health": controllers.NewHealthController(health),
 	}

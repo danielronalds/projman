@@ -1,0 +1,33 @@
+[tools]
+go = "latest"
+golangci-lint = "latest"
+gotestsum = "latest"
+
+[tasks.dev]
+description = "Runs the project"
+run = "go run ."
+
+[tasks.build]
+description = "Builds the project"
+run = "go build ."
+
+[tasks."build:install"]
+description = "Builds and installs projman locally"
+depends = ["build"]
+run = "mv projman ~/.local/bin/"
+
+[tasks."lint:fmt"]
+description = "Check for unformatted code"
+run = "test -z $(gofmt -l .)"
+
+[tasks."lint:vet"]
+description = "Run go vet for suspicious constructs"
+run = "go vet ./..."
+
+[tasks."lint:static"]
+description = "Run aggregated linters via golangci-lint"
+run = "golangci-lint run"
+
+[tasks."lint:deps"]
+description = "Check for unused or missing dependencies"
+run = "go mod tidy && git diff --exit-code go.mod go.sum"
