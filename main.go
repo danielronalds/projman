@@ -19,10 +19,15 @@ func run(args []string) {
 	selector := services.NewSelectService(config)
 	projects := services.NewProjectsService(config)
 	github := services.NewGithubService(config)
-	tmux := services.NewTmuxService(config)
 	creater := services.NewCreaterService(config)
 	health := services.NewHealthService()
 	git := services.NewGitService()
+
+	sessionProvider, err := services.NewSessionProvider(config)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err.Error())
+		os.Exit(1)
+	}
 
 	cmd := "local"
 	if len(args) > 0 {
@@ -30,21 +35,21 @@ func run(args []string) {
 	}
 
 	controllerMap := map[string]controller{
-		"new":    controllers.NewNewController(selector, creater, tmux, config),
-		"local":  controllers.NewOpenController(projects, selector, tmux),
-		"remote": controllers.NewRemoteController(github, projects, selector, tmux, config),
-		"clone":  controllers.NewCloneController(github, selector, tmux, config),
-		"active": controllers.NewActiveController(projects, selector, tmux),
+		"new":    controllers.NewNewController(selector, creater, sessionProvider, config),
+		"local":  controllers.NewOpenController(projects, selector, sessionProvider),
+		"remote": controllers.NewRemoteController(github, projects, selector, sessionProvider, config),
+		"clone":  controllers.NewCloneController(github, selector, sessionProvider, config),
+		"active": controllers.NewActiveController(projects, selector, sessionProvider),
 		"config": controllers.NewConfigController(config),
 		"rm":     controllers.NewRmController(projects, selector, git),
 		"help":   controllers.NewHelpController(),
-		"health": controllers.NewHealthController(health),
+		"health": controllers.NewHealthController(health, config),
 	}
 
 	handler, ok := controllerMap[cmd]
 
 	if !ok {
-		handler = controllers.NewDirectOpenController(projects, selector, tmux)
+		handler = controllers.NewDirectOpenController(projects, selector, sessionProvider)
 	}
 
 	if err := handler.HandleArgs(args); err != nil {

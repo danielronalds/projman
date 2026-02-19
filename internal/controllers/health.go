@@ -12,22 +12,38 @@ type healthChecker interface {
 	CheckRequirements(programs []string) map[string]bool
 }
 
-type HealthController struct {
-	healthService healthChecker
-	dependencies  []string
+type healthConfig interface {
+	SessionProvider() string
 }
 
-func NewHealthController(healthService healthChecker) HealthController {
-	deps := []string{"go", "tmux", "gh", "git"}
+type HealthController struct {
+	healthService healthChecker
+	config        healthConfig
+}
 
-	return HealthController{healthService: healthService, dependencies: deps}
+func NewHealthController(healthService healthChecker, config healthConfig) HealthController {
+	return HealthController{healthService: healthService, config: config}
+}
+
+func getProviderDependency(provider string) string {
+	switch provider {
+	case "vscode":
+		return "code"
+	case "tmux":
+		return "tmux"
+	default:
+		return "tmux"
+	}
 }
 
 func (c HealthController) HandleArgs(args []string) error {
-	results := c.healthService.CheckRequirements(c.dependencies)
+	providerDep := getProviderDependency(c.config.SessionProvider())
+	deps := []string{"go", providerDep, "gh", "git"}
+
+	results := c.healthService.CheckRequirements(deps)
 
 	hasFailure := false
-	for _, dep := range c.dependencies {
+	for _, dep := range deps {
 		statusIcon := fmt.Sprintf("[%s%s%s]", greenColor, "✓", resetColor)
 
 		if !results[dep] {
