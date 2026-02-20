@@ -19,6 +19,19 @@ type TmuxConfig struct {
 	StartingWindow int
 }
 
+type ProviderConfigOverride struct {
+	ProviderConfig
+	provider string
+}
+
+func NewProviderConfigOverride(base ProviderConfig, provider string) ProviderConfig {
+	return ProviderConfigOverride{base, provider}
+}
+
+func (p ProviderConfigOverride) SessionProvider() string {
+	return p.provider
+}
+
 func NewSessionProvider(cfg ProviderConfig) (SessionProvider, error) {
 	switch cfg.SessionProvider() {
 	case "tmux":
