@@ -6,12 +6,21 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/danielronalds/projman/internal/services"
 )
 
 type template struct {
 	Name     string   `json:"name"`
 	Commands []string `json:"commands"`
 }
+
+type tmuxConfig struct {
+	Windows        []string `json:"windows"`
+	StartingWindow int      `json:"starting_window"`
+}
+
+type vsCodeConfig struct{}
 
 type sessionLayout struct {
 	Windows        []string `json:"windows"`
@@ -28,7 +37,10 @@ type config struct {
 	ProjectDirs     []string      `json:"projectDirs"`
 	OpenNewProjects bool          `json:"openNewProjects"`
 	Templates       []template    `json:"templates"`
-	SessionLayout   sessionLayout `json:"session_layout"`
+	SessionProvider string        `json:"session_provider"`
+	Tmux            tmuxConfig    `json:"tmux"`
+	VSCode          vsCodeConfig  `json:"vscode"`
+	SessionLayout   sessionLayout `json:"session_layout,omitempty"`
 }
 
 type ConfigRepository struct {
@@ -42,10 +54,12 @@ func NewConfigRepository() ConfigRepository {
 		ProjectDirs:     []string{"Projects/"},
 		OpenNewProjects: true,
 		Templates:       make([]template, 0),
-		SessionLayout: sessionLayout{
+		SessionProvider: "tmux",
+		Tmux: tmuxConfig{
 			Windows:        []string{"CLI", "Code", "Server"},
 			StartingWindow: 2,
 		},
+		VSCode: vsCodeConfig{},
 	}
 
 	homeDir := getHomeDir()
@@ -61,7 +75,21 @@ func NewConfigRepository() ConfigRepository {
 		os.Exit(2)
 	}
 
+	if hasLegacySessionLayout(&conf) {
+		fmt.Fprintf(os.Stderr, "Error: 'session_layout' is deprecated and no longer supported.\n")
+		fmt.Fprintf(os.Stderr, "Please move your config to the 'tmux' block. See README.md for details.\n")
+		os.Exit(1)
+	}
+
+	if conf.SessionProvider == "" {
+		conf.SessionProvider = "tmux"
+	}
+
 	return ConfigRepository{conf}
+}
+
+func hasLegacySessionLayout(conf *config) bool {
+	return len(conf.SessionLayout.Windows) > 0 || conf.SessionLayout.StartingWindow != 0
 }
 
 func (r ConfigRepository) Theme() string {
@@ -105,12 +133,23 @@ func (r ConfigRepository) GetTemplateCommands(tmpl string) ([]string, error) {
 	return make([]string, 0), errors.New("no template with that name exists")
 }
 
+func (r ConfigRepository) SessionProvider() string {
+	return r.conf.SessionProvider
+}
+
+func (r ConfigRepository) TmuxConfig() services.TmuxConfig {
+	return services.TmuxConfig{
+		Windows:        r.conf.Tmux.Windows,
+		StartingWindow: r.conf.Tmux.StartingWindow,
+	}
+}
+
 func (r ConfigRepository) SessionWindows() []string {
-	return r.conf.SessionLayout.Windows
+	return r.conf.Tmux.Windows
 }
 
 func (r ConfigRepository) StartingWindow() int {
-	return r.conf.SessionLayout.StartingWindow
+	return r.conf.Tmux.StartingWindow
 }
 
 func (r ConfigRepository) ConfigFilePath() string {
@@ -118,7 +157,6 @@ func (r ConfigRepository) ConfigFilePath() string {
 	return fmt.Sprintf("%v/.config/projman/config.json", homeDir)
 }
 
-// Helper function that gets the home dir without an err. If an err occurs, the program exits
 func getHomeDir() string {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {

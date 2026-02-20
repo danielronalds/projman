@@ -8,20 +8,19 @@ import (
 	"strings"
 )
 
-type tmuxConfig interface {
-	SessionWindows() []string
-	StartingWindow() int
+type TmuxProvider struct {
+	config TmuxConfig
 }
 
-type TmuxService struct {
-	config tmuxConfig
+func NewTmuxProvider(config TmuxConfig) TmuxProvider {
+	return TmuxProvider{config}
 }
 
-func NewTmuxService(config tmuxConfig) TmuxService {
-	return TmuxService{config}
+func (p TmuxProvider) Name() string {
+	return "tmux"
 }
 
-func (s TmuxService) ListActiveSessions() ([]string, error) {
+func (p TmuxProvider) ListActiveSessions() ([]string, error) {
 	cmd := exec.Command("tmux", "list-sessions", "-F", "#{session_name}")
 	out, err := cmd.Output()
 	if err != nil {
@@ -39,19 +38,18 @@ func (s TmuxService) ListActiveSessions() ([]string, error) {
 	return sessions, nil
 }
 
-func (s TmuxService) LaunchSession(name, dir string) error {
-	// If an error occurs, its likely the session already existed
-	_ = s.createSession(name, dir)
+func (p TmuxProvider) LaunchSession(name, dir string) error {
+	_ = p.createSession(name, dir)
 
-	return s.OpenActiveSession(name)
+	return p.OpenActiveSession(name)
 }
 
-func (s TmuxService) OpenActiveSession(name string) error {
+func (p TmuxProvider) OpenActiveSession(name string) error {
 	var cmd *exec.Cmd
-	if s.isInTmuxSession() {
-		cmd = s.switchToSession(name)
+	if p.isInTmuxSession() {
+		cmd = p.switchToSession(name)
 	} else {
-		cmd = s.attachToSession(name)
+		cmd = p.attachToSession(name)
 	}
 
 	cmd.Stdin = os.Stdin
@@ -61,12 +59,12 @@ func (s TmuxService) OpenActiveSession(name string) error {
 	return cmd.Run()
 }
 
-func (s TmuxService) createSession(name, dir string) error {
-	if len(s.config.SessionWindows()) == 0 {
+func (p TmuxProvider) createSession(name, dir string) error {
+	if len(p.config.Windows) == 0 {
 		return errors.New("config needs to define at least one window")
 	}
 
-	windows := s.config.SessionWindows()
+	windows := p.config.Windows
 
 	cmd := exec.Command("tmux", "new", "-c", dir, "-s", name, "-n", windows[0], "-d")
 	if err := cmd.Run(); err != nil {
@@ -80,21 +78,21 @@ func (s TmuxService) createSession(name, dir string) error {
 		}
 	}
 
-	startingWindow := s.config.StartingWindow()
+	startingWindow := p.config.StartingWindow
 
 	cmd = exec.Command("tmux", "select-window", "-t", fmt.Sprintf("%s:%v", name, startingWindow))
 	return cmd.Run()
 }
 
-func (s TmuxService) isInTmuxSession() bool {
+func (p TmuxProvider) isInTmuxSession() bool {
 	_, ok := os.LookupEnv("TMUX")
 	return ok
 }
 
-func (s TmuxService) attachToSession(name string) *exec.Cmd {
+func (p TmuxProvider) attachToSession(name string) *exec.Cmd {
 	return exec.Command("tmux", "a", "-t", name)
 }
 
-func (s TmuxService) switchToSession(name string) *exec.Cmd {
+func (p TmuxProvider) switchToSession(name string) *exec.Cmd {
 	return exec.Command("tmux", "switch", "-t", name)
 }
