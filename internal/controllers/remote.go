@@ -3,6 +3,8 @@ package controllers
 import (
 	"errors"
 	"fmt"
+
+	"github.com/danielronalds/projman/internal/ui"
 )
 
 type projectPath = string
@@ -37,8 +39,7 @@ func NewRemoteController(remote remoteProjectManager, local localProjectsIndex, 
 }
 
 func (c RemoteController) HandleArgs(args []string) error {
-	fmt.Println("fetching projects...")
-	remoteProjects, err := c.remote.ListProjects()
+	remoteProjects, err := ui.WithSpinner("fetching projects...", c.remote.ListProjects)
 	if err != nil {
 		return fmt.Errorf("unable to fetch github projects: %v", err.Error())
 	}
