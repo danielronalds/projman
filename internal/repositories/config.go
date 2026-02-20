@@ -89,7 +89,7 @@ func NewConfigRepository() ConfigRepository {
 }
 
 func hasLegacySessionLayout(conf *config) bool {
-	return len(conf.SessionLayout.Windows) > 0
+	return len(conf.SessionLayout.Windows) > 0 || conf.SessionLayout.StartingWindow != 0
 }
 
 func (r ConfigRepository) Theme() string {

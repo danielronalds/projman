@@ -175,7 +175,7 @@ Templates allow you to run a series of commands when creating new projects. Defi
 
 ## Upgrading from older versions
 
-If you're upgrading from an older version that used `session_layout`, you'll see a deprecation warning. Update your config to use the new `tmux` block:
+If you're upgrading from an older version that used `session_layout`, projman will print an error and exit. Update your config to use the new `tmux` block:
 
 **Old format (deprecated):**
 ```json
