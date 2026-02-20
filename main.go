@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/danielronalds/projman/internal/controllers"
 	"github.com/danielronalds/projman/internal/repositories"
@@ -13,8 +14,31 @@ type controller interface {
 	HandleArgs(args []string) error
 }
 
+func parseProviderFlag(args []string) (string, []string) {
+	remaining := make([]string, 0, len(args))
+	provider := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--provider" && i+1 < len(args) {
+			provider = args[i+1]
+			i++
+		} else if value, ok := strings.CutPrefix(args[i], "--provider="); ok {
+			provider = value
+		} else {
+			remaining = append(remaining, args[i])
+		}
+	}
+	return provider, remaining
+}
+
 func run(args []string) {
 	config := repositories.NewConfigRepository()
+
+	providerFlag, args := parseProviderFlag(args)
+
+	var providerCfg services.ProviderConfig = config
+	if providerFlag != "" {
+		providerCfg = services.NewProviderConfigOverride(config, providerFlag)
+	}
 
 	selector := services.NewSelectService(config)
 	projects := services.NewProjectsService(config)
@@ -23,7 +47,7 @@ func run(args []string) {
 	health := services.NewHealthService()
 	git := services.NewGitService()
 
-	sessionProvider, err := services.NewSessionProvider(config)
+	sessionProvider, err := services.NewSessionProvider(providerCfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err.Error())
 		os.Exit(1)
