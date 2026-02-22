@@ -12,12 +12,14 @@ dev projects with integrated session management.
 - **Fuzzy Finder**: Built-in interactive fuzzy finding for project selection
 - **GitHub Integration**: Browse, clone, and open remote repositories
 - **Session Management**: Manage active sessions (tmux provider only)
+- **Project Removal**: Remove projects with uncommitted change protection
+- **Config Management**: Open your config file directly in your editor
 
 ## Installation
 
 ### Prerequisites
 
-- Go 1.24.1 or later
+- Go 1.24.2 or later
 - `tmux` for tmux session provider (default)
 - `code` for VS Code session provider
 - `gh` for remote repository management
@@ -42,7 +44,7 @@ go build -o projman .
 ## Usage
 
 ```console
-projman v0.3.0
+projman v0.7.0
 
 Usage: projman [command | project]
 
@@ -54,10 +56,21 @@ Commands
   new       Create a new project
   local     Open a project currently on your machine
   remote    Open a project from github
-  clone     Clone any git URL into a project dir
-  active    Open an existing session (tmux only)
+  clone     Clone any git url to a project dir
+  active    Open an existing session
+  config    Open the projman config in your editor
+  rm        Remove a project from your machine
   health    Verify required dependencies are installed
   help      Show this menu
+```
+
+### Global Flags
+
+`--provider <provider>` overrides the configured session provider for a single invocation:
+
+```console
+projman --provider=vscode local
+projman --provider tmux remote
 ```
 
 ## Configuration
@@ -173,6 +186,27 @@ The VS Code provider opens projects directly in VS Code using the `code` CLI com
 
 Templates allow you to run a series of commands when creating new projects. Define templates in your configuration file with a name and an array of commands to execute.
 
+Template commands have access to the `PROJMAN_PROJECT_NAME` environment variable, which contains the name of the project being created.
+
+## Editing Configuration
+
+`projman config` opens the configuration file in your editor. It uses the `$EDITOR` environment variable, falling back to `nvim` if unset.
+
+## Removing Projects
+
+`projman rm` removes a project directory from your machine. It checks for uncommitted git changes before deleting:
+
+```console
+projman rm              # fuzzy select a project to remove
+projman rm my-project   # remove a named project directly
+```
+
+If the project has uncommitted changes, projman will refuse to delete it. Use `--without-git-check` to bypass this:
+
+```console
+projman rm my-project --without-git-check
+```
+
 ## Upgrading from older versions
 
 If you're upgrading from an older version that used `session_layout`, projman will print an error and exit. Update your config to use the new `tmux` block:
@@ -197,6 +231,34 @@ If you're upgrading from an older version that used `session_layout`, projman wi
   }
 }
 ```
+
+## Development
+
+This project uses [mise](https://mise.jdx.dev) for tool management and task running.
+
+### Setup
+
+```console
+mise install
+```
+
+### Tasks
+
+| Task | Description |
+|------|-------------|
+| `mise dev` | Run the project |
+| `mise build` | Build the binary |
+| `mise build:install` | Build and install to `~/.local/bin/` |
+| `mise test` | Run all tests |
+| `mise lint:fmt` | Check for unformatted code |
+| `mise lint:vet` | Run go vet |
+| `mise lint:static` | Run golangci-lint |
+| `mise lint:deps` | Check for unused or missing dependencies |
+| `mise clean` | Remove built binary |
+
+### CI
+
+A GitHub Actions pipeline runs on pushes to `main` and on pull requests. It runs formatting, vet, static analysis, tests, and dependency checks.
 
 ## License
 
