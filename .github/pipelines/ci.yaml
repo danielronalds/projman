@@ -1,0 +1,17 @@
+description: "CI pipeline for projman"
+steps:
+  - name: "Formatting"
+    cmd: "mise run lint:fmt"
+    on_fail: "gofmt -d ."
+
+  - name: "Vet"
+    cmd: "mise run lint:vet"
+
+  - name: "Static Analysis"
+    cmd: "mise run lint:static"
+
+  - name: "Tests"
+    cmd: "mise run test"
+
+  - name: "Dependency Check"
+    cmd: "mise run lint:deps"
