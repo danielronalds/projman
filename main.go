@@ -14,26 +14,36 @@ type controller interface {
 	HandleArgs(args []string) error
 }
 
-func parseProviderFlag(args []string) (string, []string) {
+func parseProviderFlag(args []string) (string, []string, error) {
 	remaining := make([]string, 0, len(args))
 	provider := ""
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--provider" && i+1 < len(args) {
+		if args[i] == "--provider" {
+			if i+1 >= len(args) {
+				return "", nil, fmt.Errorf("--provider requires a value")
+			}
 			provider = args[i+1]
 			i++
 		} else if value, ok := strings.CutPrefix(args[i], "--provider="); ok {
+			if value == "" {
+				return "", nil, fmt.Errorf("--provider requires a value")
+			}
 			provider = value
 		} else {
 			remaining = append(remaining, args[i])
 		}
 	}
-	return provider, remaining
+	return provider, remaining, nil
 }
 
 func run(args []string) {
 	config := repositories.NewConfigRepository()
 
-	providerFlag, args := parseProviderFlag(args)
+	providerFlag, args, err := parseProviderFlag(args)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err.Error())
+		os.Exit(1)
+	}
 
 	var providerCfg services.ProviderConfig = config
 	if providerFlag != "" {
