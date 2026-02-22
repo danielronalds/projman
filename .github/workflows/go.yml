@@ -22,4 +22,5 @@ jobs:
       - name: Run CI Pipeline
         uses: danielronalds/clint-runner@main
         with:
+          go-version: '1.26'
           pipeline: ci
