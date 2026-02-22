@@ -31,3 +31,15 @@ run = "golangci-lint run"
 [tasks."lint:deps"]
 description = "Check for unused or missing dependencies"
 run = "go mod tidy && git diff --exit-code go.mod go.sum"
+
+[tasks.test]
+description = "Runs all tests in the project"
+run = "bash scripts/test.sh"
+
+[tasks.release]
+description = "Creates a GitHub release for the latest tag"
+run = "bash scripts/release.sh"
+
+[tasks.clean]
+description = "Cleans unwanted files"
+run = "bash scripts/clean.sh"
