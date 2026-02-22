@@ -18,11 +18,6 @@ type ProjectsService struct {
 	localProjects map[projectName]projectPath
 }
 
-type project struct {
-	name string
-	path string
-}
-
 func NewProjectsService(config projectsConfig) ProjectsService {
 	return ProjectsService{
 		config:        config,
@@ -63,8 +58,9 @@ func (s ProjectsService) ListProjects() ([]string, error) {
 
 func (s ProjectsService) GetPath(project string) (string, error) {
 	if len(s.localProjects) == 0 {
-		// Fetching the projects if they haven't already been fetched
-		s.ListProjects()
+		if _, err := s.ListProjects(); err != nil {
+			return "", err
+		}
 	}
 
 	path, ok := s.localProjects[project]
@@ -77,8 +73,9 @@ func (s ProjectsService) GetPath(project string) (string, error) {
 
 func (s ProjectsService) IsLocalProject(project string) bool {
 	if len(s.localProjects) == 0 {
-		// Fetching the projects if they haven't already been fetched
-		s.ListProjects()
+		if _, err := s.ListProjects(); err != nil {
+			return false
+		}
 	}
 
 	_, ok := s.localProjects[project]
