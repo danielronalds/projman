@@ -22,7 +22,7 @@ Commands
   help      Show this menu
 `
 
-const VERSION = "0.6.0"
+const VERSION = "0.7.0"
 
 type HelpController struct{}
 
