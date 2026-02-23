@@ -28,7 +28,7 @@ Direct Go commands also work:
 - Test single test: `go test ./internal/services -run TestFunctionName`
 - Format fix: `gofmt -w .`
 
-**Important** Before commiting any work in this project, run `clint` to check the CI
+**Important** Before committing any work in this project, run `clint` to check the CI
 
 ## Architecture
 
