@@ -1,5 +1,7 @@
 # Worktree Support Implementation Plan
 
+- [ ] TODO: Add copying of files in .gitignore over to new worktrees
+
 projman currently has no worktree management. Users who work with git worktrees need to manually run git commands and manage sessions separately. This adds a `wt` (alias `worktree`) subcommand group that integrates worktree lifecycle management with projman's session launching.
 
 ## Design
@@ -108,7 +110,7 @@ Handle: require name in `args[0]` -> `CreateWorktree` -> `LaunchSession` with `<
 
 ## Stage 2: Listing and opening worktrees
 
-- [ ] Complete
+- [x] Complete
 
 Adds default fuzzy select and direct-open by name.
 

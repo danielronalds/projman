@@ -150,3 +150,142 @@ func TestCreateWorktree(t *testing.T) {
 		}
 	})
 }
+
+func TestListWorktrees(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+	repoDir := filepath.Join(tmpDir, "myproject")
+	if err := os.MkdirAll(repoDir, 0755); err != nil {
+		t.Fatalf("failed to create repo dir: %v", err)
+	}
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	run(repoDir, "git", "init")
+	run(repoDir, "git", "config", "user.email", "test@test.com")
+	run(repoDir, "git", "config", "user.name", "Test")
+	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
+
+	s := NewWorktreeService()
+
+	t.Run("onlyBase", func(t *testing.T) {
+		names, err := s.ListWorktrees(repoDir)
+		if err != nil {
+			t.Fatalf("ListWorktrees() error = %v", err)
+		}
+		if len(names) != 1 {
+			t.Fatalf("ListWorktrees() returned %d names, want 1", len(names))
+		}
+		if names[0] != "myproject" {
+			t.Fatalf("ListWorktrees()[0] = %q, want %q", names[0], "myproject")
+		}
+	})
+
+	if _, err := s.CreateWorktree(repoDir, "feature-one"); err != nil {
+		t.Fatalf("CreateWorktree() error = %v", err)
+	}
+	if _, err := s.CreateWorktree(repoDir, "feature/two"); err != nil {
+		t.Fatalf("CreateWorktree() error = %v", err)
+	}
+
+	t.Run("withWorktrees", func(t *testing.T) {
+		names, err := s.ListWorktrees(repoDir)
+		if err != nil {
+			t.Fatalf("ListWorktrees() error = %v", err)
+		}
+		if len(names) != 3 {
+			t.Fatalf("ListWorktrees() returned %d names, want 3", len(names))
+		}
+		expected := map[string]bool{"myproject": true, "feature-one": true, "feature-two": true}
+		for _, name := range names {
+			if !expected[name] {
+				t.Fatalf("unexpected worktree name %q", name)
+			}
+		}
+	})
+
+	t.Run("fromWorktreeDir", func(t *testing.T) {
+		worktreeDir := filepath.Join(tmpDir, "myproject-feature-one")
+		names, err := s.ListWorktrees(worktreeDir)
+		if err != nil {
+			t.Fatalf("ListWorktrees() from worktree dir error = %v", err)
+		}
+		if len(names) != 3 {
+			t.Fatalf("ListWorktrees() from worktree dir returned %d names, want 3", len(names))
+		}
+	})
+}
+
+func TestWorktreePath(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+	repoDir := filepath.Join(tmpDir, "myproject")
+	if err := os.MkdirAll(repoDir, 0755); err != nil {
+		t.Fatalf("failed to create repo dir: %v", err)
+	}
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	run(repoDir, "git", "init")
+	run(repoDir, "git", "config", "user.email", "test@test.com")
+	run(repoDir, "git", "config", "user.name", "Test")
+	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
+
+	s := NewWorktreeService()
+	if _, err := s.CreateWorktree(repoDir, "feature-one"); err != nil {
+		t.Fatalf("CreateWorktree() error = %v", err)
+	}
+
+	t.Run("mainWorktree", func(t *testing.T) {
+		path, err := s.WorktreePath(repoDir, "myproject")
+		if err != nil {
+			t.Fatalf("WorktreePath() error = %v", err)
+		}
+		if path != repoDir {
+			t.Fatalf("WorktreePath() = %q, want %q", path, repoDir)
+		}
+	})
+
+	t.Run("found", func(t *testing.T) {
+		path, err := s.WorktreePath(repoDir, "feature-one")
+		if err != nil {
+			t.Fatalf("WorktreePath() error = %v", err)
+		}
+		expectedPath := filepath.Join(tmpDir, "myproject-feature-one")
+		if path != expectedPath {
+			t.Fatalf("WorktreePath() = %q, want %q", path, expectedPath)
+		}
+	})
+
+	t.Run("notFound", func(t *testing.T) {
+		_, err := s.WorktreePath(repoDir, "nonexistent")
+		if err == nil {
+			t.Fatalf("WorktreePath() expected error for nonexistent worktree")
+		}
+		if !strings.Contains(err.Error(), "not found") {
+			t.Fatalf("WorktreePath() error = %q, want 'not found'", err.Error())
+		}
+	})
+}

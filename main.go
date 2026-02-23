@@ -79,8 +79,8 @@ func run(args []string) {
 		"rm":       controllers.NewRmController(projects, selector, git),
 		"help":     controllers.NewHelpController(),
 		"health":   controllers.NewHealthController(health, config),
-		"worktree": controllers.NewWorktreeController(worktree, worktree, worktree, sessionProvider),
-		"wt":       controllers.NewWorktreeController(worktree, worktree, worktree, sessionProvider),
+		"worktree": controllers.NewWorktreeController(worktree, selector, sessionProvider),
+		"wt":       controllers.NewWorktreeController(worktree, selector, sessionProvider),
 	}
 
 	handler, ok := controllerMap[cmd]
