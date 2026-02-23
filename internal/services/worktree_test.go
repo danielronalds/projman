@@ -142,4 +142,11 @@ func TestCreateWorktree(t *testing.T) {
 			t.Fatalf("expected branch 'feature/my-feature' to exist, got: %q", string(output))
 		}
 	})
+
+	t.Run("invalidNameAllSpecialChars", func(t *testing.T) {
+		_, err := s.CreateWorktree(repoDir, "@#$%")
+		if err == nil {
+			t.Fatalf("expected error for invalid name, got nil")
+		}
+	})
 }

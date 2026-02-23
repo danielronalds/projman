@@ -35,6 +35,9 @@ func (s WorktreeService) CreateWorktree(dir, name string) (string, error) {
 	}
 
 	sanitised := sanitiseForDirectory(name)
+	if sanitised == "" {
+		return "", fmt.Errorf("invalid worktree name %q: results in empty directory name after sanitisation", name)
+	}
 	dirName := projectName + "-" + sanitised
 	worktreePath := filepath.Join(filepath.Dir(mainPath), dirName)
 

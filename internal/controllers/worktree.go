@@ -59,7 +59,7 @@ func (c WorktreeController) HandleArgs(args []string) error {
 	subArgs := args[1:]
 
 	if len(subArgs) == 0 {
-		return errors.New("usage: projman wt <new> [args]")
+		return errors.New("usage: projman wt <subcommand> [args]")
 	}
 
 	subcmd, ok := c.subcommands[subArgs[0]]
