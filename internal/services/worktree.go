@@ -51,26 +51,86 @@ func (s WorktreeService) CreateWorktree(dir, name string) (string, error) {
 	return worktreePath, nil
 }
 
-func resolveContext(dir string) (mainPath, projectName string, err error) {
+func (s WorktreeService) ListWorktrees(dir string) ([]string, error) {
+	mainPath, projectName, err := resolveContext(dir)
+	if err != nil {
+		return nil, fmt.Errorf("resolving git context: %v", err.Error())
+	}
+
+	paths, err := listWorktreeEntries(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var names []string
+	prefix := projectName + "-"
+	for _, path := range paths {
+		if path == mainPath {
+			names = append(names, projectName)
+			continue
+		}
+		name := strings.TrimPrefix(filepath.Base(path), prefix)
+		names = append(names, name)
+	}
+	return names, nil
+}
+
+func (s WorktreeService) WorktreePath(dir, name string) (string, error) {
+	mainPath, projectName, err := resolveContext(dir)
+	if err != nil {
+		return "", fmt.Errorf("resolving git context: %v", err.Error())
+	}
+
+	paths, err := listWorktreeEntries(dir)
+	if err != nil {
+		return "", err
+	}
+
+	if name == projectName {
+		return mainPath, nil
+	}
+
+	prefix := projectName + "-"
+	for _, path := range paths {
+		if path == mainPath {
+			continue
+		}
+		if strings.TrimPrefix(filepath.Base(path), prefix) == name {
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("worktree %q not found", name)
+}
+
+func listWorktreeEntries(dir string) ([]string, error) {
 	cmd := exec.Command("git", "worktree", "list", "--porcelain")
 	cmd.Dir = dir
 	output, err := cmd.Output()
 	if err != nil {
-		return "", "", fmt.Errorf("listing worktrees: %v", err.Error())
+		return nil, fmt.Errorf("listing worktrees: %v", err.Error())
 	}
 
-	lines := strings.Split(string(output), "\n")
-	for _, line := range lines {
+	var paths []string
+	for _, line := range strings.Split(string(output), "\n") {
 		if path, ok := strings.CutPrefix(line, "worktree "); ok {
-			mainPath = path
-			break
+			paths = append(paths, path)
 		}
 	}
+	return paths, nil
+}
 
-	if mainPath == "" {
+func resolveContext(dir string) (mainPath, projectName string, err error) {
+	paths, err := listWorktreeEntries(dir)
+	if err != nil {
+		return "", "", err
+	}
+
+	if len(paths) == 0 {
 		return "", "", fmt.Errorf("could not determine main worktree path")
 	}
 
+	mainPath = paths[0]
 	projectName = filepath.Base(mainPath)
 	return mainPath, projectName, nil
 }
