@@ -21,7 +21,7 @@ func (s WorktreeService) IsGitRepo(dir string) bool {
 }
 
 func (s WorktreeService) MainWorktreePath(dir string) (string, error) {
-	mainPath, _, err := resolveContext(dir)
+	mainPath, _, _, err := resolveContext(dir)
 	if err != nil {
 		return "", err
 	}
@@ -29,7 +29,7 @@ func (s WorktreeService) MainWorktreePath(dir string) (string, error) {
 }
 
 func (s WorktreeService) CreateWorktree(dir, name string) (string, error) {
-	mainPath, projectName, err := resolveContext(dir)
+	mainPath, projectName, _, err := resolveContext(dir)
 	if err != nil {
 		return "", fmt.Errorf("resolving git context: %v", err.Error())
 	}
@@ -52,14 +52,9 @@ func (s WorktreeService) CreateWorktree(dir, name string) (string, error) {
 }
 
 func (s WorktreeService) ListWorktrees(dir string) ([]string, error) {
-	mainPath, projectName, err := resolveContext(dir)
+	mainPath, projectName, paths, err := resolveContext(dir)
 	if err != nil {
 		return nil, fmt.Errorf("resolving git context: %v", err.Error())
-	}
-
-	paths, err := listWorktreeEntries(dir)
-	if err != nil {
-		return nil, err
 	}
 
 	var names []string
@@ -76,14 +71,9 @@ func (s WorktreeService) ListWorktrees(dir string) ([]string, error) {
 }
 
 func (s WorktreeService) WorktreePath(dir, name string) (string, error) {
-	mainPath, projectName, err := resolveContext(dir)
+	mainPath, projectName, paths, err := resolveContext(dir)
 	if err != nil {
 		return "", fmt.Errorf("resolving git context: %v", err.Error())
-	}
-
-	paths, err := listWorktreeEntries(dir)
-	if err != nil {
-		return "", err
 	}
 
 	if name == projectName {
@@ -120,19 +110,19 @@ func listWorktreeEntries(dir string) ([]string, error) {
 	return paths, nil
 }
 
-func resolveContext(dir string) (mainPath, projectName string, err error) {
-	paths, err := listWorktreeEntries(dir)
+func resolveContext(dir string) (mainPath, projectName string, paths []string, err error) {
+	paths, err = listWorktreeEntries(dir)
 	if err != nil {
-		return "", "", err
+		return "", "", nil, err
 	}
 
 	if len(paths) == 0 {
-		return "", "", fmt.Errorf("could not determine main worktree path")
+		return "", "", nil, fmt.Errorf("could not determine main worktree path")
 	}
 
 	mainPath = paths[0]
 	projectName = filepath.Base(mainPath)
-	return mainPath, projectName, nil
+	return mainPath, projectName, paths, nil
 }
 
 var nonAlphanumericDashDotUnderscore = regexp.MustCompile(`[^a-zA-Z0-9\-._]`)
