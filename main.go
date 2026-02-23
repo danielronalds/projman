@@ -56,6 +56,7 @@ func run(args []string) {
 	creater := services.NewCreaterService(config)
 	health := services.NewHealthService()
 	git := services.NewGitService()
+	worktree := services.NewWorktreeService()
 
 	sessionProvider, err := services.NewSessionProvider(providerCfg)
 	if err != nil {
@@ -69,15 +70,17 @@ func run(args []string) {
 	}
 
 	controllerMap := map[string]controller{
-		"new":    controllers.NewNewController(selector, creater, sessionProvider, config),
-		"local":  controllers.NewOpenController(projects, selector, sessionProvider),
-		"remote": controllers.NewRemoteController(github, projects, selector, sessionProvider, config),
-		"clone":  controllers.NewCloneController(github, selector, sessionProvider, config),
-		"active": controllers.NewActiveController(projects, selector, sessionProvider),
-		"config": controllers.NewConfigController(config),
-		"rm":     controllers.NewRmController(projects, selector, git),
-		"help":   controllers.NewHelpController(),
-		"health": controllers.NewHealthController(health, config),
+		"new":      controllers.NewNewController(selector, creater, sessionProvider, config),
+		"local":    controllers.NewOpenController(projects, selector, sessionProvider),
+		"remote":   controllers.NewRemoteController(github, projects, selector, sessionProvider, config),
+		"clone":    controllers.NewCloneController(github, selector, sessionProvider, config),
+		"active":   controllers.NewActiveController(projects, selector, sessionProvider),
+		"config":   controllers.NewConfigController(config),
+		"rm":       controllers.NewRmController(projects, selector, git),
+		"help":     controllers.NewHelpController(),
+		"health":   controllers.NewHealthController(health, config),
+		"worktree": controllers.NewWorktreeController(worktree, worktree, worktree, sessionProvider),
+		"wt":       controllers.NewWorktreeController(worktree, worktree, worktree, sessionProvider),
 	}
 
 	handler, ok := controllerMap[cmd]

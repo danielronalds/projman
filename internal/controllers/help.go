@@ -18,11 +18,12 @@ Commands
   active    Open an existing session
   config    Open the projman config in your editor
   rm        Remove a project from your machine
+  worktree  Manage git worktrees (alias: wt)
   health    Verify required dependencies are installed
   help      Show this menu
 `
 
-const VERSION = "0.7.0"
+const VERSION = "0.8.0"
 
 type HelpController struct{}
 
