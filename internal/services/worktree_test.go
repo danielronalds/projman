@@ -80,7 +80,9 @@ func TestCreateWorktree(t *testing.T) {
 
 	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
 	repoDir := filepath.Join(tmpDir, "myproject")
-	os.MkdirAll(repoDir, 0755)
+	if err := os.MkdirAll(repoDir, 0755); err != nil {
+		t.Fatalf("failed to create repo dir: %v", err)
+	}
 
 	run := func(dir string, args ...string) {
 		t.Helper()
