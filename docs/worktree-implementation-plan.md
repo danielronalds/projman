@@ -110,7 +110,7 @@ Handle: require name in `args[0]` -> `CreateWorktree` -> `LaunchSession` with `<
 
 ## Stage 2: Listing and opening worktrees
 
-- [ ] Complete
+- [x] Complete
 
 Adds default fuzzy select and direct-open by name.
 
