@@ -95,6 +95,8 @@ func TestCreateWorktree(t *testing.T) {
 	}
 
 	run(repoDir, "git", "init")
+	run(repoDir, "git", "config", "user.email", "test@test.com")
+	run(repoDir, "git", "config", "user.name", "Test")
 	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
 
 	s := NewWorktreeService()
