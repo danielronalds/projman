@@ -201,6 +201,63 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 	return warnings
 }
 
+func (s WorktreeService) ListRemoteBranches(dir string) ([]string, error) {
+	fetchCmd := exec.Command("git", "fetch", "--all", "--prune")
+	fetchCmd.Dir = dir
+	if output, err := fetchCmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("fetching remotes: %v", strings.TrimSpace(string(output)))
+	}
+
+	branchCmd := exec.Command("git", "branch", "-r", "--format=%(refname:short)")
+	branchCmd.Dir = dir
+	output, err := branchCmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("listing remote branches: %v", err.Error())
+	}
+
+	var branches []string
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if line == "" || strings.Contains(line, "HEAD") {
+			continue
+		}
+		branches = append(branches, line)
+	}
+	return branches, nil
+}
+
+func (s WorktreeService) CheckoutWorktree(dir, remoteBranch string) (string, error) {
+	mainPath, projectName, _, err := resolveContext(dir)
+	if err != nil {
+		return "", fmt.Errorf("resolving git context: %v", err.Error())
+	}
+
+	parts := strings.SplitN(remoteBranch, "/", 2)
+	if len(parts) < 2 {
+		return "", fmt.Errorf("invalid remote branch %q: expected format <remote>/<branch>", remoteBranch)
+	}
+	localBranch := parts[1]
+
+	sanitised := sanitiseForDirectory(localBranch)
+	if sanitised == "" {
+		return "", fmt.Errorf("invalid branch name %q: results in empty directory name after sanitisation", remoteBranch)
+	}
+
+	dirName := projectName + "-" + sanitised
+	worktreePath := filepath.Join(filepath.Dir(mainPath), dirName)
+
+	cmd := exec.Command("git", "worktree", "add", worktreePath, remoteBranch)
+	cmd.Dir = mainPath
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		if _, statErr := os.Stat(worktreePath); statErr == nil {
+			return worktreePath, nil
+		}
+		return "", fmt.Errorf("checking out worktree: %v", strings.TrimSpace(string(output)))
+	}
+
+	return worktreePath, nil
+}
+
 var nonAlphanumericDashDotUnderscore = regexp.MustCompile(`[^a-zA-Z0-9\-._]`)
 var multipleDashes = regexp.MustCompile(`-{2,}`)
 

@@ -290,6 +290,131 @@ func TestWorktreePath(t *testing.T) {
 	})
 }
 
+func TestListRemoteBranches(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+	remoteDir := filepath.Join(tmpDir, "remote")
+	repoDir := filepath.Join(tmpDir, "myproject")
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	run(tmpDir, "git", "init", remoteDir)
+	run(remoteDir, "git", "config", "user.email", "test@test.com")
+	run(remoteDir, "git", "config", "user.name", "Test")
+	run(remoteDir, "git", "commit", "--allow-empty", "-m", "initial")
+	run(remoteDir, "git", "checkout", "-b", "feature/test-branch")
+	run(remoteDir, "git", "commit", "--allow-empty", "-m", "feature commit")
+	run(tmpDir, "git", "clone", remoteDir, repoDir)
+
+	s := NewWorktreeService()
+
+	t.Run("includesRemoteBranches", func(t *testing.T) {
+		branches, err := s.ListRemoteBranches(repoDir)
+		if err != nil {
+			t.Fatalf("ListRemoteBranches() error = %v", err)
+		}
+		found := false
+		for _, b := range branches {
+			if b == "origin/feature/test-branch" {
+				found = true
+			}
+		}
+		if !found {
+			t.Fatalf("expected 'origin/feature/test-branch' in branches, got %v", branches)
+		}
+	})
+
+	t.Run("excludesHead", func(t *testing.T) {
+		branches, err := s.ListRemoteBranches(repoDir)
+		if err != nil {
+			t.Fatalf("ListRemoteBranches() error = %v", err)
+		}
+		for _, b := range branches {
+			if strings.Contains(b, "HEAD") {
+				t.Fatalf("expected HEAD to be filtered out, got %q in branches", b)
+			}
+		}
+	})
+}
+
+func TestCheckoutWorktree(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+	remoteDir := filepath.Join(tmpDir, "remote")
+	repoDir := filepath.Join(tmpDir, "myproject")
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	run(tmpDir, "git", "init", remoteDir)
+	run(remoteDir, "git", "config", "user.email", "test@test.com")
+	run(remoteDir, "git", "config", "user.name", "Test")
+	run(remoteDir, "git", "commit", "--allow-empty", "-m", "initial")
+	run(remoteDir, "git", "checkout", "-b", "feature/test-branch")
+	run(remoteDir, "git", "commit", "--allow-empty", "-m", "feature commit")
+	run(tmpDir, "git", "clone", remoteDir, repoDir)
+
+	s := NewWorktreeService()
+
+	t.Run("checkoutRemoteBranch", func(t *testing.T) {
+		path, err := s.CheckoutWorktree(repoDir, "origin/feature/test-branch")
+		if err != nil {
+			t.Fatalf("CheckoutWorktree() error = %v", err)
+		}
+
+		expectedPath := filepath.Join(tmpDir, "myproject-feature-test-branch")
+		if path != expectedPath {
+			t.Fatalf("CheckoutWorktree() path = %q, want %q", path, expectedPath)
+		}
+
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Fatalf("worktree directory does not exist at %q", path)
+		}
+	})
+
+	t.Run("alreadyCheckedOut", func(t *testing.T) {
+		path1, err := s.CheckoutWorktree(repoDir, "origin/feature/test-branch")
+		if err != nil {
+			t.Fatalf("first CheckoutWorktree() error = %v", err)
+		}
+		path2, err := s.CheckoutWorktree(repoDir, "origin/feature/test-branch")
+		if err != nil {
+			t.Fatalf("second CheckoutWorktree() error = %v", err)
+		}
+		if path1 != path2 {
+			t.Fatalf("second CheckoutWorktree() path = %q, want %q", path2, path1)
+		}
+	})
+
+	t.Run("invalidRemoteBranch", func(t *testing.T) {
+		_, err := s.CheckoutWorktree(repoDir, "noslash")
+		if err == nil {
+			t.Fatalf("expected error for branch with no remote prefix, got nil")
+		}
+	})
+}
+
 func TestCopyIgnoredFiles(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
