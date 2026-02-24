@@ -18,6 +18,19 @@ func (m *mockWorktreeCreator) CreateWorktree(dir, name string) (string, error) {
 	return m.returnPath, m.returnErr
 }
 
+type mockIgnoredFileHandler struct {
+	hasFiles       bool
+	returnWarnings []string
+}
+
+func (m *mockIgnoredFileHandler) HasIgnoredFiles(dir string) bool {
+	return m.hasFiles
+}
+
+func (m *mockIgnoredFileHandler) CopyIgnoredFiles(mainPath, worktreePath string) []string {
+	return m.returnWarnings
+}
+
 type mockSessionLauncher struct {
 	returnErr  error
 	calledName string
@@ -32,7 +45,11 @@ func (m *mockSessionLauncher) LaunchSession(name, dir string) error {
 
 func TestNewControllerHandle(t *testing.T) {
 	t.Run("missingName", func(t *testing.T) {
-		controller := NewNewController(&mockWorktreeCreator{}, &mockSessionLauncher{})
+		controller := NewNewController(
+			&mockWorktreeCreator{},
+			&mockIgnoredFileHandler{},
+			&mockSessionLauncher{},
+		)
 
 		err := controller.Handle("/projects/myapp", "myapp", []string{})
 		if err == nil {
@@ -46,7 +63,11 @@ func TestNewControllerHandle(t *testing.T) {
 	t.Run("successfulCreate", func(t *testing.T) {
 		worktrees := &mockWorktreeCreator{returnPath: "/projects/myapp-feature-auth"}
 		sessions := &mockSessionLauncher{}
-		controller := NewNewController(worktrees, sessions)
+		controller := NewNewController(
+			worktrees,
+			&mockIgnoredFileHandler{},
+			sessions,
+		)
 
 		err := controller.Handle("/projects/myapp", "myapp", []string{"feature/auth"})
 		if err != nil {
