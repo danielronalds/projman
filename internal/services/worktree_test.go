@@ -149,7 +149,6 @@ func TestCreateWorktree(t *testing.T) {
 			t.Fatalf("expected error for invalid name, got nil")
 		}
 	})
-
 }
 
 func TestListWorktrees(t *testing.T) {

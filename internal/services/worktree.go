@@ -145,6 +145,7 @@ func listIgnoredPaths(dir string) ([]string, error) {
 	return paths, nil
 }
 
+// NOTE: cp -a is not available on Windows
 func copyPath(src, dst string) error {
 	src = strings.TrimSuffix(src, string(filepath.Separator))
 	dst = strings.TrimSuffix(dst, string(filepath.Separator))
@@ -166,11 +167,6 @@ func copyPath(src, dst string) error {
 	return nil
 }
 
-func (s WorktreeService) HasIgnoredFiles(dir string) bool {
-	paths, err := listIgnoredPaths(dir)
-	return err == nil && len(paths) > 0
-}
-
 func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []string {
 	paths, err := listIgnoredPaths(mainPath)
 	if err != nil {
@@ -180,11 +176,16 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 	var warnings []string
 	var mu sync.Mutex
 	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, 8)
 
 	for _, relPath := range paths {
 		wg.Add(1)
 		go func(relPath string) {
 			defer wg.Done()
+			// Limit concurrent cp processes to avoid exhausting OS resources
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
 			src := filepath.Join(mainPath, relPath)
 			dst := filepath.Join(worktreePath, relPath)
 

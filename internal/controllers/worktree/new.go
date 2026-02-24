@@ -14,7 +14,6 @@ type worktreeCreator interface {
 }
 
 type ignoredFileHandler interface {
-	HasIgnoredFiles(dir string) bool
 	CopyIgnoredFiles(mainPath, worktreePath string) []string
 }
 
@@ -46,7 +45,8 @@ func (c NewController) Handle(projectRoot, projectName string, args []string) er
 		return fmt.Errorf("creating worktree: %v", err.Error())
 	}
 
-	if c.ignoredFiles.HasIgnoredFiles(projectRoot) && ui.Confirm("Copy ignored files to new worktree?") {
+	gitignorePath := filepath.Join(projectRoot, ".gitignore")
+	if _, statErr := os.Stat(gitignorePath); statErr == nil && ui.Confirm("Copy ignored files to new worktree?") {
 		warnings, _ := ui.WithSpinner("copying ignored files...", func() ([]string, error) {
 			return c.ignoredFiles.CopyIgnoredFiles(projectRoot, path), nil
 		})

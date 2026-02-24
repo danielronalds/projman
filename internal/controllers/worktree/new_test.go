@@ -19,12 +19,7 @@ func (m *mockWorktreeCreator) CreateWorktree(dir, name string) (string, error) {
 }
 
 type mockIgnoredFileHandler struct {
-	hasFiles       bool
 	returnWarnings []string
-}
-
-func (m *mockIgnoredFileHandler) HasIgnoredFiles(dir string) bool {
-	return m.hasFiles
 }
 
 func (m *mockIgnoredFileHandler) CopyIgnoredFiles(mainPath, worktreePath string) []string {
