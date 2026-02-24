@@ -132,7 +132,7 @@ func listIgnoredPaths(dir string) ([]string, error) {
 	cmd.Dir = dir
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("git ls-files: %v", err.Error())
+		return nil, fmt.Errorf("git ls-files: %v", err)
 	}
 
 	var paths []string
@@ -156,7 +156,7 @@ func copyPath(src, dst string) error {
 
 	dstDir := filepath.Dir(dst)
 	if err := os.MkdirAll(dstDir, 0755); err != nil {
-		return fmt.Errorf("creating parent directory: %v", err.Error())
+		return fmt.Errorf("creating parent directory: %v", err)
 	}
 
 	cmd := exec.Command("cp", "-a", src, dst)
@@ -170,7 +170,7 @@ func copyPath(src, dst string) error {
 func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []string {
 	paths, err := listIgnoredPaths(mainPath)
 	if err != nil {
-		return []string{fmt.Sprintf("listing ignored files: %v", err.Error())}
+		return []string{fmt.Sprintf("listing ignored files: %v", err)}
 	}
 
 	var warnings []string
@@ -191,7 +191,7 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 
 			if err := copyPath(src, dst); err != nil {
 				mu.Lock()
-				warnings = append(warnings, fmt.Sprintf("copying %s: %v", relPath, err.Error()))
+				warnings = append(warnings, fmt.Sprintf("copying %s: %v", relPath, err))
 				mu.Unlock()
 			}
 		}(relPath)

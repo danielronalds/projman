@@ -38,7 +38,7 @@ func (c NewController) Handle(projectRoot, projectName string, args []string) er
 		return c.worktrees.CreateWorktree(projectRoot, branchName)
 	})
 	if err != nil {
-		return fmt.Errorf("creating worktree: %v", err.Error())
+		return fmt.Errorf("creating worktree: %v", err)
 	}
 
 	gitignorePath := filepath.Join(projectRoot, ".gitignore")
