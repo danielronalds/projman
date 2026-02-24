@@ -6,10 +6,11 @@ import (
 )
 
 type mockWorktreeCreator struct {
-	returnPath string
-	returnErr  error
-	calledDir  string
-	calledName string
+	returnPath     string
+	returnErr      error
+	calledDir      string
+	calledName     string
+	returnWarnings []string
 }
 
 func (m *mockWorktreeCreator) CreateWorktree(dir, name string) (string, error) {
@@ -18,11 +19,7 @@ func (m *mockWorktreeCreator) CreateWorktree(dir, name string) (string, error) {
 	return m.returnPath, m.returnErr
 }
 
-type mockIgnoredFileHandler struct {
-	returnWarnings []string
-}
-
-func (m *mockIgnoredFileHandler) CopyIgnoredFiles(mainPath, worktreePath string) []string {
+func (m *mockWorktreeCreator) CopyIgnoredFiles(mainPath, worktreePath string) []string {
 	return m.returnWarnings
 }
 
@@ -42,7 +39,6 @@ func TestNewControllerHandle(t *testing.T) {
 	t.Run("missingName", func(t *testing.T) {
 		controller := NewNewController(
 			&mockWorktreeCreator{},
-			&mockIgnoredFileHandler{},
 			&mockSessionLauncher{},
 		)
 
@@ -60,7 +56,6 @@ func TestNewControllerHandle(t *testing.T) {
 		sessions := &mockSessionLauncher{}
 		controller := NewNewController(
 			worktrees,
-			&mockIgnoredFileHandler{},
 			sessions,
 		)
 

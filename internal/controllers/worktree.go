@@ -32,7 +32,7 @@ func NewWorktreeController(worktrees worktreeManager, fzf selecter, sessions ses
 	openController := worktree.NewOpenController(worktrees, worktrees, fzf, sessions)
 
 	subcommands := map[string]subcommand{
-		"new":  worktree.NewNewController(worktrees, worktrees, sessions),
+		"new":  worktree.NewNewController(worktrees, sessions),
 		"open": openController,
 	}
 

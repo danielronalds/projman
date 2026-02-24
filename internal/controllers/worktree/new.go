@@ -11,9 +11,6 @@ import (
 
 type worktreeCreator interface {
 	CreateWorktree(dir, name string) (string, error)
-}
-
-type ignoredFileHandler interface {
 	CopyIgnoredFiles(mainPath, worktreePath string) []string
 }
 
@@ -22,13 +19,12 @@ type sessionLauncher interface {
 }
 
 type NewController struct {
-	worktrees    worktreeCreator
-	ignoredFiles ignoredFileHandler
-	sessions     sessionLauncher
+	worktrees worktreeCreator
+	sessions  sessionLauncher
 }
 
-func NewNewController(worktrees worktreeCreator, ignoredFiles ignoredFileHandler, sessions sessionLauncher) NewController {
-	return NewController{worktrees, ignoredFiles, sessions}
+func NewNewController(worktrees worktreeCreator, sessions sessionLauncher) NewController {
+	return NewController{worktrees, sessions}
 }
 
 func (c NewController) Handle(projectRoot, projectName string, args []string) error {
@@ -48,7 +44,7 @@ func (c NewController) Handle(projectRoot, projectName string, args []string) er
 	gitignorePath := filepath.Join(projectRoot, ".gitignore")
 	if _, statErr := os.Stat(gitignorePath); statErr == nil && ui.Confirm("Copy ignored files to new worktree?") {
 		warnings, _ := ui.WithSpinner("copying ignored files...", func() ([]string, error) {
-			return c.ignoredFiles.CopyIgnoredFiles(projectRoot, path), nil
+			return c.worktrees.CopyIgnoredFiles(projectRoot, path), nil
 		})
 		for _, w := range warnings {
 			fmt.Fprintf(os.Stderr, "warning: %s\n", w)
