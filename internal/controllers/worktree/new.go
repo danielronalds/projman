@@ -3,11 +3,15 @@ package worktree
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
+
+	"github.com/danielronalds/projman/internal/ui"
 )
 
 type worktreeCreator interface {
 	CreateWorktree(dir, name string) (string, error)
+	CopyIgnoredFiles(mainPath, worktreePath string) []string
 }
 
 type sessionLauncher interface {
@@ -30,9 +34,21 @@ func (c NewController) Handle(projectRoot, projectName string, args []string) er
 
 	branchName := args[0]
 
-	path, err := c.worktrees.CreateWorktree(projectRoot, branchName)
+	path, err := ui.WithSpinner("creating worktree...", func() (string, error) {
+		return c.worktrees.CreateWorktree(projectRoot, branchName)
+	})
 	if err != nil {
-		return fmt.Errorf("creating worktree: %v", err.Error())
+		return fmt.Errorf("creating worktree: %v", err)
+	}
+
+	gitignorePath := filepath.Join(projectRoot, ".gitignore")
+	if _, statErr := os.Stat(gitignorePath); statErr == nil && ui.Confirm("Copy ignored files to new worktree?") {
+		warnings, _ := ui.WithSpinner("copying ignored files...", func() ([]string, error) {
+			return c.worktrees.CopyIgnoredFiles(projectRoot, path), nil
+		})
+		for _, w := range warnings {
+			fmt.Fprintf(os.Stderr, "warning: %s\n", w)
+		}
 	}
 
 	return c.sessions.LaunchSession(filepath.Base(path), path)

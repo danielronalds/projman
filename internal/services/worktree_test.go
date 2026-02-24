@@ -289,3 +289,144 @@ func TestWorktreePath(t *testing.T) {
 		}
 	})
 }
+
+func TestCopyIgnoredFiles(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	s := NewWorktreeService()
+
+	type testHelpers struct {
+		run   func(dir string, args ...string)
+		mkdir func(path string)
+		write func(path, content string)
+	}
+
+	setupRepo := func(t *testing.T) (repoDir string, tmpDir string, h testHelpers) {
+		t.Helper()
+		tmpDir, _ = filepath.EvalSymlinks(t.TempDir())
+		repoDir = filepath.Join(tmpDir, "myproject")
+		if err := os.MkdirAll(repoDir, 0755); err != nil {
+			t.Fatalf("failed to create repo dir: %v", err)
+		}
+
+		h.run = func(dir string, args ...string) {
+			t.Helper()
+			cmd := exec.Command(args[0], args[1:]...)
+			cmd.Dir = dir
+			output, err := cmd.CombinedOutput()
+			if err != nil {
+				t.Fatalf("command %v failed: %v\n%s", args, err, output)
+			}
+		}
+
+		h.mkdir = func(path string) {
+			t.Helper()
+			if err := os.MkdirAll(path, 0755); err != nil {
+				t.Fatalf("failed to create directory %s: %v", path, err)
+			}
+		}
+
+		h.write = func(path, content string) {
+			t.Helper()
+			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+				t.Fatalf("failed to write file %s: %v", path, err)
+			}
+		}
+
+		h.run(repoDir, "git", "init")
+		h.run(repoDir, "git", "config", "user.email", "test@test.com")
+		h.run(repoDir, "git", "config", "user.name", "Test")
+		h.run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
+		return repoDir, tmpDir, h
+	}
+
+	t.Run("noGitignore", func(t *testing.T) {
+		repoDir, tmpDir, h := setupRepo(t)
+		worktreePath := filepath.Join(tmpDir, "myproject-test")
+
+		h.mkdir(worktreePath)
+		warnings := s.CopyIgnoredFiles(repoDir, worktreePath)
+		if len(warnings) != 0 {
+			t.Fatalf("expected no warnings, got %v", warnings)
+		}
+	})
+
+	t.Run("ignoredFileCopied", func(t *testing.T) {
+		repoDir, tmpDir, h := setupRepo(t)
+
+		h.write(filepath.Join(repoDir, ".gitignore"), "*.log\n")
+		h.write(filepath.Join(repoDir, "debug.log"), "log content")
+		h.run(repoDir, "git", "add", ".gitignore")
+		h.run(repoDir, "git", "commit", "-m", "add gitignore")
+
+		worktreePath := filepath.Join(tmpDir, "myproject-test")
+		h.mkdir(worktreePath)
+
+		warnings := s.CopyIgnoredFiles(repoDir, worktreePath)
+		if len(warnings) != 0 {
+			t.Fatalf("expected no warnings, got %v", warnings)
+		}
+
+		content, err := os.ReadFile(filepath.Join(worktreePath, "debug.log"))
+		if err != nil {
+			t.Fatalf("expected debug.log to be copied, got error: %v", err)
+		}
+		if string(content) != "log content" {
+			t.Fatalf("debug.log content = %q, want %q", string(content), "log content")
+		}
+	})
+
+	t.Run("ignoredDirectoryCopied", func(t *testing.T) {
+		repoDir, tmpDir, h := setupRepo(t)
+
+		h.write(filepath.Join(repoDir, ".gitignore"), "node_modules/\n")
+		h.mkdir(filepath.Join(repoDir, "node_modules", "pkg"))
+		h.write(filepath.Join(repoDir, "node_modules", "pkg", "index.js"), "module.exports = {}")
+		h.run(repoDir, "git", "add", ".gitignore")
+		h.run(repoDir, "git", "commit", "-m", "add gitignore")
+
+		worktreePath := filepath.Join(tmpDir, "myproject-test")
+		h.mkdir(worktreePath)
+
+		warnings := s.CopyIgnoredFiles(repoDir, worktreePath)
+		if len(warnings) != 0 {
+			t.Fatalf("expected no warnings, got %v", warnings)
+		}
+
+		content, err := os.ReadFile(filepath.Join(worktreePath, "node_modules", "pkg", "index.js"))
+		if err != nil {
+			t.Fatalf("expected node_modules/pkg/index.js to be copied, got error: %v", err)
+		}
+		if string(content) != "module.exports = {}" {
+			t.Fatalf("index.js content = %q, want %q", string(content), "module.exports = {}")
+		}
+	})
+
+	t.Run("nestedGitignore", func(t *testing.T) {
+		repoDir, tmpDir, h := setupRepo(t)
+
+		h.mkdir(filepath.Join(repoDir, "subdir"))
+		h.write(filepath.Join(repoDir, "subdir", ".gitignore"), "*.tmp\n")
+		h.write(filepath.Join(repoDir, "subdir", "cache.tmp"), "cached")
+		h.run(repoDir, "git", "add", "subdir/.gitignore")
+		h.run(repoDir, "git", "commit", "-m", "add nested gitignore")
+
+		worktreePath := filepath.Join(tmpDir, "myproject-test")
+		h.mkdir(worktreePath)
+
+		warnings := s.CopyIgnoredFiles(repoDir, worktreePath)
+		if len(warnings) != 0 {
+			t.Fatalf("expected no warnings, got %v", warnings)
+		}
+
+		content, err := os.ReadFile(filepath.Join(worktreePath, "subdir", "cache.tmp"))
+		if err != nil {
+			t.Fatalf("expected subdir/cache.tmp to be copied, got error: %v", err)
+		}
+		if string(content) != "cached" {
+			t.Fatalf("cache.tmp content = %q, want %q", string(content), "cached")
+		}
+	})
+}

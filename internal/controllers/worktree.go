@@ -19,6 +19,7 @@ type worktreeManager interface {
 	CreateWorktree(dir, name string) (string, error)
 	ListWorktrees(dir string) ([]string, error)
 	WorktreePath(dir, name string) (string, error)
+	CopyIgnoredFiles(mainPath, worktreePath string) []string
 }
 
 type WorktreeController struct {

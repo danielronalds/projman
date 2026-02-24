@@ -2,10 +2,12 @@ package services
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type WorktreeService struct{}
@@ -123,6 +125,80 @@ func resolveContext(dir string) (mainPath, projectName string, paths []string, e
 	mainPath = paths[0]
 	projectName = filepath.Base(mainPath)
 	return mainPath, projectName, paths, nil
+}
+
+func listIgnoredPaths(dir string) ([]string, error) {
+	cmd := exec.Command("git", "ls-files", "--ignored", "--exclude-standard", "--others", "--directory")
+	cmd.Dir = dir
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("git ls-files: %v", err)
+	}
+
+	var paths []string
+	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
+		if line == "" {
+			continue
+		}
+		paths = append(paths, line)
+	}
+	return paths, nil
+}
+
+// NOTE: cp -a is not available on Windows
+func copyPath(src, dst string) error {
+	src = strings.TrimSuffix(src, string(filepath.Separator))
+	dst = strings.TrimSuffix(dst, string(filepath.Separator))
+
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return nil
+	}
+
+	dstDir := filepath.Dir(dst)
+	if err := os.MkdirAll(dstDir, 0755); err != nil {
+		return fmt.Errorf("creating parent directory: %v", err)
+	}
+
+	cmd := exec.Command("cp", "-a", src, dst)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("%v", strings.TrimSpace(string(output)))
+	}
+	return nil
+}
+
+func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []string {
+	paths, err := listIgnoredPaths(mainPath)
+	if err != nil {
+		return []string{fmt.Sprintf("listing ignored files: %v", err)}
+	}
+
+	var warnings []string
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+	semaphore := make(chan struct{}, 8)
+
+	for _, relPath := range paths {
+		wg.Add(1)
+		go func(relPath string) {
+			defer wg.Done()
+			// Limit concurrent cp processes to avoid exhausting OS resources
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
+
+			src := filepath.Join(mainPath, relPath)
+			dst := filepath.Join(worktreePath, relPath)
+
+			if err := copyPath(src, dst); err != nil {
+				mu.Lock()
+				warnings = append(warnings, fmt.Sprintf("copying %s: %v", relPath, err))
+				mu.Unlock()
+			}
+		}(relPath)
+	}
+
+	wg.Wait()
+	return warnings
 }
 
 var nonAlphanumericDashDotUnderscore = regexp.MustCompile(`[^a-zA-Z0-9\-._]`)
