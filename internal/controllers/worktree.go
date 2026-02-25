@@ -20,6 +20,8 @@ type worktreeManager interface {
 	ListWorktrees(dir string) ([]string, error)
 	WorktreePath(dir, name string) (string, error)
 	CopyIgnoredFiles(mainPath, worktreePath string) []string
+	ListRemoteBranches(dir string) ([]string, error)
+	CheckoutWorktree(dir, remoteBranch string) (string, error)
 }
 
 type WorktreeController struct {
@@ -32,8 +34,9 @@ func NewWorktreeController(worktrees worktreeManager, fzf selecter, sessions ses
 	openController := worktree.NewOpenController(worktrees, worktrees, fzf, sessions)
 
 	subcommands := map[string]subcommand{
-		"new":  worktree.NewNewController(worktrees, sessions),
-		"open": openController,
+		"new":      worktree.NewNewController(worktrees, sessions),
+		"open":     openController,
+		"checkout": worktree.NewCheckoutController(worktrees, worktrees, fzf, sessions),
 	}
 
 	return WorktreeController{worktrees, subcommands, openController}

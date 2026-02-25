@@ -30,17 +30,6 @@ func (m *mockWorktreePathFinder) WorktreePath(dir, name string) (string, error) 
 	return m.returnPath, m.returnErr
 }
 
-type mockSelecter struct {
-	returnSelected string
-	returnErr      error
-	calledOptions  []string
-}
-
-func (m *mockSelecter) Select(options []string) (string, error) {
-	m.calledOptions = options
-	return m.returnSelected, m.returnErr
-}
-
 func TestOpenControllerHandle(t *testing.T) {
 	t.Run("noWorktreesExist", func(t *testing.T) {
 		lister := &mockWorktreeLister{returnNames: nil}

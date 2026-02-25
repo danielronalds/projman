@@ -161,7 +161,7 @@ Handle: if no args, list -> select -> open. If args, treat as direct name -> res
 
 ## Stage 3: `checkout` command
 
-- [ ] Complete
+- [x] Complete
 
 Adds fetching remote branches and checking them out into worktrees.
 
