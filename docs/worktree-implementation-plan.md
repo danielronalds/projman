@@ -210,7 +210,7 @@ Handle: `WithSpinner` around `ListRemoteBranches` -> select -> `CheckoutWorktree
 
 ## Stage 4: `rm` command
 
-- [ ] Complete
+- [x] Complete
 
 Adds worktree removal with fuzzy selection.
 

@@ -22,6 +22,7 @@ type worktreeManager interface {
 	CopyIgnoredFiles(mainPath, worktreePath string) []string
 	ListRemoteBranches(dir string) ([]string, error)
 	CheckoutWorktree(dir, remoteBranch string) (string, error)
+	RemoveWorktree(dir, name string) error
 }
 
 type WorktreeController struct {
@@ -37,6 +38,7 @@ func NewWorktreeController(worktrees worktreeManager, fzf selecter, sessions ses
 		"new":      worktree.NewNewController(worktrees, sessions),
 		"open":     openController,
 		"checkout": worktree.NewCheckoutController(worktrees, worktrees, fzf, sessions),
+		"rm":       worktree.NewRmController(worktrees, worktrees, fzf),
 	}
 
 	return WorktreeController{worktrees, subcommands, openController}

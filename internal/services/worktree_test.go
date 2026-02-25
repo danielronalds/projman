@@ -399,6 +399,61 @@ func TestCheckoutWorktree(t *testing.T) {
 	})
 }
 
+func TestRemoveWorktree(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+	repoDir := filepath.Join(tmpDir, "myproject")
+	if err := os.MkdirAll(repoDir, 0755); err != nil {
+		t.Fatalf("failed to create repo dir: %v", err)
+	}
+
+	run := func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	run(repoDir, "git", "init")
+	run(repoDir, "git", "config", "user.email", "test@test.com")
+	run(repoDir, "git", "config", "user.name", "Test")
+	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
+
+	s := NewWorktreeService()
+
+	t.Run("removeWorktree", func(t *testing.T) {
+		worktreePath, err := s.CreateWorktree(repoDir, "feature-to-remove")
+		if err != nil {
+			t.Fatalf("CreateWorktree() error = %v", err)
+		}
+
+		if _, err := os.Stat(worktreePath); os.IsNotExist(err) {
+			t.Fatalf("worktree directory does not exist before removal")
+		}
+
+		if err := s.RemoveWorktree(repoDir, "feature-to-remove"); err != nil {
+			t.Fatalf("RemoveWorktree() error = %v", err)
+		}
+
+		if _, err := os.Stat(worktreePath); !os.IsNotExist(err) {
+			t.Fatalf("expected worktree directory to be removed at %q", worktreePath)
+		}
+	})
+
+	t.Run("removeNonexistent", func(t *testing.T) {
+		err := s.RemoveWorktree(repoDir, "nonexistent")
+		if err == nil {
+			t.Fatalf("expected error for nonexistent worktree, got nil")
+		}
+	})
+}
+
 func TestCopyIgnoredFiles(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
