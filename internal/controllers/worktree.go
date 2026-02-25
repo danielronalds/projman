@@ -39,6 +39,7 @@ func NewWorktreeController(worktrees worktreeManager, fzf selecter, sessions ses
 		"open":     openController,
 		"checkout": worktree.NewCheckoutController(worktrees, worktrees, fzf, sessions),
 		"rm":       worktree.NewRmController(worktrees, worktrees, fzf),
+		"help":     worktree.NewHelpController(),
 	}
 
 	return WorktreeController{worktrees, subcommands, openController}
