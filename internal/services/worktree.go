@@ -245,7 +245,7 @@ func (s WorktreeService) CheckoutWorktree(dir, remoteBranch string) (string, err
 	dirName := projectName + "-" + sanitised
 	worktreePath := filepath.Join(filepath.Dir(mainPath), dirName)
 
-	cmd := exec.Command("git", "worktree", "add", worktreePath, remoteBranch)
+	cmd := exec.Command("git", "worktree", "add", worktreePath, localBranch)
 	cmd.Dir = mainPath
 	output, err := cmd.CombinedOutput()
 	if err != nil {
