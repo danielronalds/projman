@@ -258,6 +258,27 @@ func (s WorktreeService) CheckoutWorktree(dir, remoteBranch string) (string, err
 	return worktreePath, nil
 }
 
+func (s WorktreeService) RemoveWorktree(dir, name string) error {
+	path, err := s.WorktreePath(dir, name)
+	if err != nil {
+		return fmt.Errorf("resolving worktree path: %v", err.Error())
+	}
+
+	removeCmd := exec.Command("git", "worktree", "remove", path)
+	removeCmd.Dir = dir
+	if output, err := removeCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("removing worktree: %v", strings.TrimSpace(string(output)))
+	}
+
+	pruneCmd := exec.Command("git", "worktree", "prune")
+	pruneCmd.Dir = dir
+	if output, err := pruneCmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("pruning worktrees: %v", strings.TrimSpace(string(output)))
+	}
+
+	return nil
+}
+
 var nonAlphanumericDashDotUnderscore = regexp.MustCompile(`[^a-zA-Z0-9\-._]`)
 var multipleDashes = regexp.MustCompile(`-{2,}`)
 
