@@ -290,14 +290,11 @@ func TestWorktreePath(t *testing.T) {
 	})
 }
 
-func TestListRemoteBranches(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-
-	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+func setupRemoteAndClone(t *testing.T) (repoDir, tmpDir string) {
+	t.Helper()
+	tmpDir, _ = filepath.EvalSymlinks(t.TempDir())
 	remoteDir := filepath.Join(tmpDir, "remote")
-	repoDir := filepath.Join(tmpDir, "myproject")
+	repoDir = filepath.Join(tmpDir, "myproject")
 
 	run := func(dir string, args ...string) {
 		t.Helper()
@@ -313,10 +310,18 @@ func TestListRemoteBranches(t *testing.T) {
 	run(remoteDir, "git", "config", "user.email", "test@test.com")
 	run(remoteDir, "git", "config", "user.name", "Test")
 	run(remoteDir, "git", "commit", "--allow-empty", "-m", "initial")
-	run(remoteDir, "git", "checkout", "-b", "feature/test-branch")
-	run(remoteDir, "git", "commit", "--allow-empty", "-m", "feature commit")
+	run(remoteDir, "git", "branch", "feature/test-branch")
+	run(remoteDir, "git", "branch", "feature/second-branch")
 	run(tmpDir, "git", "clone", remoteDir, repoDir)
+	return repoDir, tmpDir
+}
 
+func TestListRemoteBranches(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	repoDir, _ := setupRemoteAndClone(t)
 	s := NewWorktreeService()
 
 	t.Run("includesRemoteBranches", func(t *testing.T) {
@@ -353,28 +358,7 @@ func TestCheckoutWorktree(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
-	remoteDir := filepath.Join(tmpDir, "remote")
-	repoDir := filepath.Join(tmpDir, "myproject")
-
-	run := func(dir string, args ...string) {
-		t.Helper()
-		cmd := exec.Command(args[0], args[1:]...)
-		cmd.Dir = dir
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("command %v failed: %v\n%s", args, err, output)
-		}
-	}
-
-	run(tmpDir, "git", "init", remoteDir)
-	run(remoteDir, "git", "config", "user.email", "test@test.com")
-	run(remoteDir, "git", "config", "user.name", "Test")
-	run(remoteDir, "git", "commit", "--allow-empty", "-m", "initial")
-	run(remoteDir, "git", "checkout", "-b", "feature/test-branch")
-	run(remoteDir, "git", "commit", "--allow-empty", "-m", "feature commit")
-	run(tmpDir, "git", "clone", remoteDir, repoDir)
-
+	repoDir, tmpDir := setupRemoteAndClone(t)
 	s := NewWorktreeService()
 
 	t.Run("checkoutRemoteBranch", func(t *testing.T) {
@@ -394,11 +378,11 @@ func TestCheckoutWorktree(t *testing.T) {
 	})
 
 	t.Run("alreadyCheckedOut", func(t *testing.T) {
-		path1, err := s.CheckoutWorktree(repoDir, "origin/feature/test-branch")
+		path1, err := s.CheckoutWorktree(repoDir, "origin/feature/second-branch")
 		if err != nil {
 			t.Fatalf("first CheckoutWorktree() error = %v", err)
 		}
-		path2, err := s.CheckoutWorktree(repoDir, "origin/feature/test-branch")
+		path2, err := s.CheckoutWorktree(repoDir, "origin/feature/second-branch")
 		if err != nil {
 			t.Fatalf("second CheckoutWorktree() error = %v", err)
 		}
