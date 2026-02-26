@@ -66,11 +66,12 @@ Commands
 
 ### Global Flags
 
-`--provider <provider>` overrides the configured session provider for a single invocation:
+`--provider, -p <provider>` overrides the configured session provider for a single invocation:
 
 ```console
 projman --provider=vscode local
 projman --provider tmux remote
+projman -p tmux local
 ```
 
 ## Configuration

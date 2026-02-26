@@ -18,15 +18,20 @@ func parseProviderFlag(args []string) (string, []string, error) {
 	remaining := make([]string, 0, len(args))
 	provider := ""
 	for i := 0; i < len(args); i++ {
-		if args[i] == "--provider" {
+		if args[i] == "--provider" || args[i] == "-p" {
 			if i+1 >= len(args) {
-				return "", nil, fmt.Errorf("--provider requires a value")
+				return "", nil, fmt.Errorf("--provider/-p requires a value")
 			}
 			provider = args[i+1]
 			i++
 		} else if value, ok := strings.CutPrefix(args[i], "--provider="); ok {
 			if value == "" {
-				return "", nil, fmt.Errorf("--provider requires a value")
+				return "", nil, fmt.Errorf("--provider/-p requires a value")
+			}
+			provider = value
+		} else if value, ok := strings.CutPrefix(args[i], "-p="); ok {
+			if value == "" {
+				return "", nil, fmt.Errorf("--provider/-p requires a value")
 			}
 			provider = value
 		} else {
