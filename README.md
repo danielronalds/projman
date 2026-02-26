@@ -13,6 +13,7 @@ dev projects with integrated session management.
 - **GitHub Integration**: Browse, clone, and open remote repositories
 - **Session Management**: Manage active sessions (tmux provider only)
 - **Project Removal**: Remove projects with uncommitted change protection
+- **Git Worktrees**: Create, open, checkout, and remove git worktrees with automatic session launching
 - **Config Management**: Open your config file directly in your editor
 
 ## Installation
@@ -44,7 +45,7 @@ go build -o projman .
 ## Usage
 
 ```console
-projman v0.7.0
+projman v0.8.0
 
 Usage: projman [command | project]
 
@@ -60,6 +61,7 @@ Commands
   active    Open an existing session
   config    Open the projman config in your editor
   rm        Remove a project from your machine
+  worktree  Manage git worktrees -- run 'projman wt help' for details (alias: wt)
   health    Verify required dependencies are installed
   help      Show this menu
 ```
@@ -207,6 +209,65 @@ If the project has uncommitted changes, projman will refuse to delete it. Use `-
 ```console
 projman rm my-project --without-git-check
 ```
+
+## Git Worktrees
+
+`projman wt` (or `projman worktree`) manages git worktrees for the current project. Run it with no arguments to select and open an existing worktree.
+
+```console
+Usage: projman wt [subcommand | name]
+
+Manage git worktrees for the current project.
+
+To select and open a worktree, run projman wt with no arguments
+
+Commands
+  new <name>  Create a new worktree and branch, then open a session
+  checkout    Fetch remote branches, select one, and open a session
+  rm          Select and remove a worktree
+  help        Show this menu
+```
+
+### Creating a worktree
+
+`projman wt new <name>` creates a new git worktree with a new branch and launches a session in it:
+
+```console
+projman wt new feature/auth
+```
+
+### Checking out a remote branch
+
+`projman wt checkout` fetches all remote branches, presents them in a fuzzy finder, and creates a worktree from the selected branch:
+
+```console
+projman wt checkout
+```
+
+### Opening a worktree
+
+`projman wt` with no arguments lists existing worktrees in a fuzzy finder. You can also pass a name directly:
+
+```console
+projman wt                  # fuzzy select a worktree to open
+projman wt my-worktree      # open a named worktree directly
+```
+
+### Removing a worktree
+
+`projman wt rm` lists worktrees (excluding the base) in a fuzzy finder and removes the selected one:
+
+```console
+projman wt rm
+```
+
+### Ignored files
+
+When creating or checking out a worktree, projman offers to copy gitignored files (e.g. `.env`, `node_modules/`) from the main worktree into the new one.
+
+### Naming conventions
+
+Worktree directories are named `<project>-<sanitised-branch>`, where slashes and spaces in the branch name become dashes. For example, `feature/auth` in a project called `myapp` produces a directory called `myapp-feature-auth`. Sessions follow the same naming pattern.
 
 ## Upgrading from older versions
 
