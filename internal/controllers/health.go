@@ -38,7 +38,7 @@ func getProviderDependency(provider string) string {
 
 func (c HealthController) HandleArgs(args []string) error {
 	providerDep := getProviderDependency(c.config.SessionProvider())
-	deps := []string{"go", providerDep, "gh", "git"}
+	deps := []string{providerDep, "gh", "git"}
 
 	results := c.healthService.CheckRequirements(deps)
 
