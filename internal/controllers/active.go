@@ -21,15 +21,15 @@ type sessionManager interface {
 type ActiveController struct {
 	projects projectPathFinder
 	fzf      selecter
-	tmux     sessionManager
+	sessions sessionManager
 }
 
-func NewActiveController(projects projectPathFinder, fzf selecter, tmux sessionManager) ActiveController {
-	return ActiveController{projects, fzf, tmux}
+func NewActiveController(projects projectPathFinder, fzf selecter, sessions sessionManager) ActiveController {
+	return ActiveController{projects, fzf, sessions}
 }
 
 func (c ActiveController) HandleArgs(args []string) error {
-	sessions, err := c.tmux.ListActiveSessions()
+	sessions, err := c.sessions.ListActiveSessions()
 	if err != nil {
 		return fmt.Errorf("unable to list active sessions: %v", err.Error())
 	}
@@ -45,5 +45,5 @@ func (c ActiveController) HandleArgs(args []string) error {
 		return errors.New("no session selected")
 	}
 
-	return c.tmux.OpenActiveSession(session)
+	return c.sessions.OpenActiveSession(session)
 }

@@ -18,14 +18,14 @@ type projectCreator interface {
 }
 
 type NewController struct {
-	fzf     selecter
-	creater projectCreator
-	tmux    sessionLauncher
-	config  newConfig
+	fzf      selecter
+	creater  projectCreator
+	sessions sessionLauncher
+	config   newConfig
 }
 
-func NewNewController(fzf selecter, creater projectCreator, tmux sessionLauncher, config newConfig) NewController {
-	return NewController{fzf, creater, tmux, config}
+func NewNewController(fzf selecter, creater projectCreator, sessions sessionLauncher, config newConfig) NewController {
+	return NewController{fzf, creater, sessions, config}
 }
 
 func (c NewController) HandleArgs(args []string) error {
@@ -50,7 +50,7 @@ func (c NewController) HandleArgs(args []string) error {
 	}
 
 	if c.config.OpenNewProjects() {
-		return c.tmux.LaunchSession(projectName, projPath)
+		return c.sessions.LaunchSession(projectName, projPath)
 	}
 
 	return nil

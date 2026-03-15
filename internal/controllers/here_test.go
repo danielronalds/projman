@@ -8,15 +8,15 @@ import (
 )
 
 type mockSessionLauncher struct {
-	launchedName string
-	launchedDir  string
-	err          error
+	calledName string
+	calledDir  string
+	returnErr  error
 }
 
 func (m *mockSessionLauncher) LaunchSession(name, dir string) error {
-	m.launchedName = name
-	m.launchedDir = dir
-	return m.err
+	m.calledName = name
+	m.calledDir = dir
+	return m.returnErr
 }
 
 func TestHereController_HandleArgs(t *testing.T) {
@@ -36,17 +36,17 @@ func TestHereController_HandleArgs(t *testing.T) {
 			t.Fatalf("HandleArgs() error = %v, want nil", err)
 		}
 
-		if mock.launchedName != expectedName {
-			t.Fatalf("LaunchSession name = %q, want %q", mock.launchedName, expectedName)
+		if mock.calledName != expectedName {
+			t.Fatalf("LaunchSession name = %q, want %q", mock.calledName, expectedName)
 		}
 
-		if mock.launchedDir != cwd {
-			t.Fatalf("LaunchSession dir = %q, want %q", mock.launchedDir, cwd)
+		if mock.calledDir != cwd {
+			t.Fatalf("LaunchSession dir = %q, want %q", mock.calledDir, cwd)
 		}
 	})
 
 	t.Run("returns session launcher error", func(t *testing.T) {
-		mock := &mockSessionLauncher{err: fmt.Errorf("session failed")}
+		mock := &mockSessionLauncher{returnErr: fmt.Errorf("session failed")}
 		controller := NewHereController(mock)
 
 		err := controller.HandleArgs([]string{})
