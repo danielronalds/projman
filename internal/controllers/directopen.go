@@ -8,11 +8,11 @@ import (
 type DirectOpenController struct {
 	projects openProjectLister
 	fzf      selecter
-	tmux     sessionLauncher
+	sessions sessionLauncher
 }
 
-func NewDirectOpenController(projects openProjectLister, fzf selecter, tmux sessionLauncher) DirectOpenController {
-	return DirectOpenController{projects, fzf, tmux}
+func NewDirectOpenController(projects openProjectLister, fzf selecter, sessions sessionLauncher) DirectOpenController {
+	return DirectOpenController{projects, fzf, sessions}
 }
 
 func (c DirectOpenController) HandleArgs(args []string) error {
@@ -27,5 +27,5 @@ func (c DirectOpenController) HandleArgs(args []string) error {
 		return fmt.Errorf("unable to get project path: %v", err.Error())
 	}
 
-	return c.tmux.LaunchSession(proj, projPath)
+	return c.sessions.LaunchSession(proj, projPath)
 }

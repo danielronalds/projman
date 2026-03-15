@@ -29,11 +29,11 @@ type openProjectLister interface {
 type OpenController struct {
 	projects openProjectLister
 	fzf      selecter
-	tmux     sessionLauncher
+	sessions sessionLauncher
 }
 
-func NewOpenController(projects openProjectLister, fzf selecter, tmux sessionLauncher) OpenController {
-	return OpenController{projects, fzf, tmux}
+func NewOpenController(projects openProjectLister, fzf selecter, sessions sessionLauncher) OpenController {
+	return OpenController{projects, fzf, sessions}
 }
 
 func (c OpenController) HandleArgs(args []string) error {
@@ -53,5 +53,5 @@ func (c OpenController) HandleArgs(args []string) error {
 		return fmt.Errorf("unable to get project path: %v", err.Error())
 	}
 
-	return c.tmux.LaunchSession(proj, projPath)
+	return c.sessions.LaunchSession(proj, projPath)
 }

@@ -12,14 +12,14 @@ type remoteURLCloner interface {
 }
 
 type CloneController struct {
-	remote remoteURLCloner
-	fzf    selecter
-	tmux   sessionLauncher
-	config remoteConfig
+	remote   remoteURLCloner
+	fzf      selecter
+	sessions sessionLauncher
+	config   remoteConfig
 }
 
-func NewCloneController(remote remoteURLCloner, fzf selecter, tmux sessionLauncher, config remoteConfig) CloneController {
-	return CloneController{remote, fzf, tmux, config}
+func NewCloneController(remote remoteURLCloner, fzf selecter, sessions sessionLauncher, config remoteConfig) CloneController {
+	return CloneController{remote, fzf, sessions, config}
 }
 
 func (c CloneController) HandleArgs(args []string) error {
@@ -46,7 +46,7 @@ func (c CloneController) HandleArgs(args []string) error {
 		return fmt.Errorf("unable to clone project: %v", err.Error())
 	}
 
-	return c.tmux.LaunchSession(repoName, projPath)
+	return c.sessions.LaunchSession(repoName, projPath)
 }
 
 var repoNameRegex = regexp.MustCompile(`([\w.-]+)(?:\.git)?$`)

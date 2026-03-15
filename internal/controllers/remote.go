@@ -27,15 +27,15 @@ type remoteConfig interface {
 }
 
 type RemoteController struct {
-	remote remoteProjectManager
-	local  localProjectsIndex
-	fzf    selecter
-	tmux   sessionLauncher
-	config remoteConfig
+	remote   remoteProjectManager
+	local    localProjectsIndex
+	fzf      selecter
+	sessions sessionLauncher
+	config   remoteConfig
 }
 
-func NewRemoteController(remote remoteProjectManager, local localProjectsIndex, fzf selecter, tmux sessionLauncher, config remoteConfig) RemoteController {
-	return RemoteController{remote, local, fzf, tmux, config}
+func NewRemoteController(remote remoteProjectManager, local localProjectsIndex, fzf selecter, sessions sessionLauncher, config remoteConfig) RemoteController {
+	return RemoteController{remote, local, fzf, sessions, config}
 }
 
 func (c RemoteController) HandleArgs(args []string) error {
@@ -71,5 +71,5 @@ func (c RemoteController) HandleArgs(args []string) error {
 		return fmt.Errorf("unable to get clone project: %v", err.Error())
 	}
 
-	return c.tmux.LaunchSession(proj, projPath)
+	return c.sessions.LaunchSession(proj, projPath)
 }
