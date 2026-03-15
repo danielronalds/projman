@@ -80,6 +80,7 @@ func run(args []string) {
 		"remote":   controllers.NewRemoteController(github, projects, selector, sessionProvider, config),
 		"clone":    controllers.NewCloneController(github, selector, sessionProvider, config),
 		"active":   controllers.NewActiveController(projects, selector, sessionProvider),
+		"here":     controllers.NewHereController(sessionProvider),
 		"config":   controllers.NewConfigController(config),
 		"rm":       controllers.NewRmController(projects, selector, git),
 		"help":     controllers.NewHelpController(),
