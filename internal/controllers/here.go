@@ -6,12 +6,17 @@ import (
 	"path/filepath"
 )
 
-type HereController struct {
-	sessions sessionLauncher
+type sessionNameSanitiser interface {
+	Sanitise(name string) string
 }
 
-func NewHereController(sessions sessionLauncher) HereController {
-	return HereController{sessions}
+type HereController struct {
+	sessions  sessionLauncher
+	sanitiser sessionNameSanitiser
+}
+
+func NewHereController(sessions sessionLauncher, sanitiser sessionNameSanitiser) HereController {
+	return HereController{sessions, sanitiser}
 }
 
 func (c HereController) HandleArgs(args []string) error {
@@ -20,7 +25,7 @@ func (c HereController) HandleArgs(args []string) error {
 		return fmt.Errorf("unable to get current directory: %v", err.Error())
 	}
 
-	name := filepath.Base(cwd)
+	name := c.sanitiser.Sanitise(filepath.Base(cwd))
 
 	return c.sessions.LaunchSession(name, cwd)
 }

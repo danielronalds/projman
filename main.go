@@ -63,6 +63,8 @@ func run(args []string) {
 	git := services.NewGitService()
 	worktree := services.NewWorktreeService()
 
+	sanitiser := services.NewSanitiser()
+
 	sessionProvider, err := services.NewSessionProvider(providerCfg)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err.Error())
@@ -80,7 +82,7 @@ func run(args []string) {
 		"remote":   controllers.NewRemoteController(github, projects, selector, sessionProvider, config),
 		"clone":    controllers.NewCloneController(github, selector, sessionProvider, config),
 		"active":   controllers.NewActiveController(projects, selector, sessionProvider),
-		"here":     controllers.NewHereController(sessionProvider),
+		"here":     controllers.NewHereController(sessionProvider, sanitiser),
 		"config":   controllers.NewConfigController(config),
 		"rm":       controllers.NewRmController(projects, selector, git),
 		"help":     controllers.NewHelpController(),

@@ -19,37 +19,44 @@ func (m *mockSessionLauncher) LaunchSession(name, dir string) error {
 	return m.returnErr
 }
 
-func TestHereController_HandleArgs(t *testing.T) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("failed to get working directory: %v", err)
-	}
+type mockSanitiser struct{}
 
-	expectedName := filepath.Base(cwd)
+func (m *mockSanitiser) Sanitise(name string) string {
+	return name
+}
+
+func TestHereController_HandleArgs(t *testing.T) {
+	subdir := "test-project"
+	tempDir := filepath.Join(t.TempDir(), subdir)
+	err := os.MkdirAll(tempDir, 0755)
+	if err != nil {
+		t.Fatalf("failed to create temp dir: %v", err)
+	}
+	t.Chdir(tempDir)
 
 	t.Run("launches session with cwd", func(t *testing.T) {
 		mock := &mockSessionLauncher{}
-		controller := NewHereController(mock)
+		controller := NewHereController(mock, &mockSanitiser{})
 
-		err := controller.HandleArgs([]string{})
+		err := controller.HandleArgs([]string{"here"})
 		if err != nil {
 			t.Fatalf("HandleArgs() error = %v, want nil", err)
 		}
 
-		if mock.calledName != expectedName {
-			t.Fatalf("LaunchSession name = %q, want %q", mock.calledName, expectedName)
+		if mock.calledName != subdir {
+			t.Fatalf("LaunchSession name = %q, want %q", mock.calledName, subdir)
 		}
 
-		if mock.calledDir != cwd {
-			t.Fatalf("LaunchSession dir = %q, want %q", mock.calledDir, cwd)
+		if mock.calledDir != tempDir {
+			t.Fatalf("LaunchSession dir = %q, want %q", mock.calledDir, tempDir)
 		}
 	})
 
 	t.Run("returns session launcher error", func(t *testing.T) {
 		mock := &mockSessionLauncher{returnErr: fmt.Errorf("session failed")}
-		controller := NewHereController(mock)
+		controller := NewHereController(mock, &mockSanitiser{})
 
-		err := controller.HandleArgs([]string{})
+		err := controller.HandleArgs([]string{"here"})
 		if err == nil {
 			t.Fatalf("HandleArgs() error = nil, want error")
 		}
