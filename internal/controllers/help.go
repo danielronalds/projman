@@ -25,7 +25,7 @@ Commands
   help      Show this menu
 `
 
-const VERSION = "0.8.1"
+const VERSION = "0.9.0"
 
 type HelpController struct{}
 
