@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -158,7 +159,7 @@ func TestListProjectsByDirectory(t *testing.T) {
 
 			var dirs []string
 			for i, projects := range tt.setupDirs {
-				dirName := filepath.Join(homeDir, "dir"+string(rune('0'+i)))
+				dirName := filepath.Join(homeDir, fmt.Sprintf("dir%d", i))
 				err := os.MkdirAll(dirName, 0755)
 				if err != nil {
 					t.Fatalf("failed to create dir: %v", err)

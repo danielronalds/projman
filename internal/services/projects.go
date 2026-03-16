@@ -114,15 +114,11 @@ func (s ProjectsService) ListProjectsByDirectory(filter string) ([]ProjectGroup,
 			return nil, err
 		}
 
-		var projects []string
+		projects := make([]string, 0, len(contents))
 		for _, entry := range contents {
 			if entry.IsDir() {
 				projects = append(projects, entry.Name())
 			}
-		}
-
-		if projects == nil {
-			projects = []string{}
 		}
 
 		sort.Strings(projects)
