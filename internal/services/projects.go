@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 )
 
 type projectName = string
@@ -80,6 +82,58 @@ func (s ProjectsService) IsLocalProject(project string) bool {
 
 	_, ok := s.localProjects[project]
 	return ok
+}
+
+type ProjectGroup struct {
+	Directory string
+	Projects  []string
+}
+
+func (s ProjectsService) ListProjectsByDirectory(filter string) ([]ProjectGroup, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return nil, fmt.Errorf("getting home directory: %v", err.Error())
+	}
+
+	lowerFilter := strings.ToLower(filter)
+
+	var groups []ProjectGroup
+	for _, dir := range s.config.ProjectDirs() {
+		if len(dir) == 0 {
+			return nil, errors.New("invalid project directory")
+		}
+
+		displayName := strings.TrimPrefix(dir, homeDir+"/")
+
+		if filter != "" && !strings.Contains(strings.ToLower(displayName), lowerFilter) {
+			continue
+		}
+
+		contents, err := os.ReadDir(dir)
+		if err != nil {
+			return nil, err
+		}
+
+		var projects []string
+		for _, entry := range contents {
+			if entry.IsDir() {
+				projects = append(projects, entry.Name())
+			}
+		}
+
+		if projects == nil {
+			projects = []string{}
+		}
+
+		sort.Strings(projects)
+
+		groups = append(groups, ProjectGroup{
+			Directory: displayName,
+			Projects:  projects,
+		})
+	}
+
+	return groups, nil
 }
 
 func getProjectNames(m map[projectName]projectPath) []string {
