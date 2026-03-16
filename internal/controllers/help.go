@@ -17,6 +17,7 @@ Commands
   clone     Clone any git url to a project dir
   active    Open an existing session
   here      Open a session in the current directory
+  list      List all local projects (optionally filter by directory name)
   config    Open the projman config in your editor
   rm        Remove a project from your machine
   worktree  Manage git worktrees -- run 'projman wt help' for details (alias: wt)

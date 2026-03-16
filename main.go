@@ -85,6 +85,7 @@ func run(args []string) {
 		"here":     controllers.NewHereController(sessionProvider, sanitiser),
 		"config":   controllers.NewConfigController(config),
 		"rm":       controllers.NewRmController(projects, selector, git),
+		"list":     controllers.NewListController(projects),
 		"help":     controllers.NewHelpController(),
 		"health":   controllers.NewHealthController(health, config),
 		"worktree": controllers.NewWorktreeController(worktree, selector, sessionProvider),

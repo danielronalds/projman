@@ -43,3 +43,7 @@ run = "bash scripts/release.sh"
 [tasks.clean]
 description = "Cleans unwanted files"
 run = "bash scripts/clean.sh"
+
+[tasks."update:readme"]
+description = "Updates the README help block with current output"
+run = "bash scripts/update-readme-help.sh"
