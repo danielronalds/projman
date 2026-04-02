@@ -12,46 +12,46 @@ type healthChecker interface {
 	CheckRequirements(programs []string) map[string]bool
 }
 
-type healthConfig interface {
-	SessionProvider() string
+type dependency struct {
+	name        string
+	description string
+}
+
+var dependencies = []dependency{
+	{name: "tmux", description: "Required for the tmux session provider"},
+	{name: "code", description: "Required for the vscode session provider"},
+	{name: "gh", description: "Required for the remote command"},
+	{name: "git", description: "Required for the clone command"},
 }
 
 type HealthController struct {
 	healthService healthChecker
-	config        healthConfig
 }
 
-func NewHealthController(healthService healthChecker, config healthConfig) HealthController {
-	return HealthController{healthService: healthService, config: config}
-}
-
-func getProviderDependency(provider string) string {
-	switch provider {
-	case "vscode":
-		return "code"
-	case "tmux":
-		return "tmux"
-	default:
-		return "tmux"
-	}
+func NewHealthController(healthService healthChecker) HealthController {
+	return HealthController{healthService: healthService}
 }
 
 func (c HealthController) HandleArgs(args []string) error {
-	providerDep := getProviderDependency(c.config.SessionProvider())
-	deps := []string{providerDep, "gh", "git"}
+	depNames := make([]string, len(dependencies))
+	for i, dep := range dependencies {
+		depNames[i] = dep.name
+	}
 
-	results := c.healthService.CheckRequirements(deps)
+	results := c.healthService.CheckRequirements(depNames)
 
 	hasFailure := false
-	for _, dep := range deps {
+	for _, dep := range dependencies {
 		statusIcon := fmt.Sprintf("[%s%s%s]", greenColor, "✓", resetColor)
+		suffix := ""
 
-		if !results[dep] {
+		if !results[dep.name] {
 			hasFailure = true
 			statusIcon = fmt.Sprintf("[%s%s%s]", redColor, "x", resetColor)
+			suffix = fmt.Sprintf(" - %s", dep.description)
 		}
 
-		fmt.Printf("%s %s\n", statusIcon, dep)
+		fmt.Printf("%s %s%s\n", statusIcon, dep.name, suffix)
 	}
 
 	fmt.Println()

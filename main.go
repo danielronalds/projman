@@ -87,7 +87,7 @@ func run(args []string) {
 		"rm":       controllers.NewRmController(projects, selector, git),
 		"list":     controllers.NewListController(projects),
 		"help":     controllers.NewHelpController(),
-		"health":   controllers.NewHealthController(health, config),
+		"health":   controllers.NewHealthController(health),
 		"worktree": controllers.NewWorktreeController(worktree, selector, sessionProvider),
 		"wt":       controllers.NewWorktreeController(worktree, selector, sessionProvider),
 	}
