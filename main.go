@@ -43,6 +43,7 @@ func parseProviderFlag(args []string) (string, []string, error) {
 
 func run(args []string) {
 	config := repositories.NewConfigRepository()
+	notesRepo := repositories.NewNotesRepository()
 
 	providerFlag, args, err := parseProviderFlag(args)
 	if err != nil {
@@ -62,6 +63,7 @@ func run(args []string) {
 	health := services.NewHealthService()
 	git := services.NewGitService()
 	worktree := services.NewWorktreeService()
+	notes := services.NewNotesService(config, notesRepo)
 
 	sanitiser := services.NewSanitiser()
 
@@ -85,6 +87,7 @@ func run(args []string) {
 		"here":     controllers.NewHereController(sessionProvider, sanitiser),
 		"config":   controllers.NewConfigController(config),
 		"rm":       controllers.NewRmController(projects, selector, git),
+		"notes":    controllers.NewNotesController(notes, notes, projects, selector),
 		"list":     controllers.NewListController(projects),
 		"help":     controllers.NewHelpController(),
 		"health":   controllers.NewHealthController(health),
