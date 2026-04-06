@@ -66,9 +66,13 @@ func (c NotesController) resolveProjectPath() (string, error) {
 		return "", fmt.Errorf("unable to fetch local projects: %v", err.Error())
 	}
 
+	if len(projects) == 0 {
+		return "", errors.New("no local projects found")
+	}
+
 	proj, err := c.fzf.Select(projects)
 	if err != nil {
-		return "", errors.New("no project selected")
+		return "", fmt.Errorf("selecting project: %v", err.Error())
 	}
 
 	projPath, err = c.projects.GetPath(proj)

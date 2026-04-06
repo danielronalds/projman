@@ -127,8 +127,32 @@ func TestNotesControllerHandleArgs(t *testing.T) {
 		if err == nil {
 			t.Fatalf("expected error, got nil")
 		}
-		if !strings.Contains(err.Error(), "no project selected") {
-			t.Fatalf("expected 'no project selected' error, got: %v", err)
+		if !strings.Contains(err.Error(), "selecting project") {
+			t.Fatalf("expected 'selecting project' error, got: %v", err)
+		}
+	})
+
+	t.Run("noLocalProjects", func(t *testing.T) {
+		resolver := &mockNotesProjectResolver{
+			returnErr: errors.New("not in a project"),
+		}
+		notes := &mockNotesPathProvider{}
+		projects := &mockNotesProjectLister{
+			returnProjects: []string{},
+		}
+		fzf := &mockNotesSelecter{}
+
+		controller := NewNotesController(resolver, notes, projects, fzf)
+		err := controller.HandleArgs(nil)
+
+		if err == nil {
+			t.Fatalf("expected error, got nil")
+		}
+		if !strings.Contains(err.Error(), "no local projects found") {
+			t.Fatalf("expected 'no local projects found' error, got: %v", err)
+		}
+		if fzf.calledOptions != nil {
+			t.Fatalf("Select should not be called when there are no projects")
 		}
 	})
 

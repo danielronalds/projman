@@ -31,7 +31,7 @@ func (r NotesRepository) NotesDir() (string, error) {
 func userDataDir() (string, error) {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return "", fmt.Errorf("unable to get users home dir: %v", err.Error())
+		return "", fmt.Errorf("unable to get user's home dir: %v", err.Error())
 	}
 
 	if runtime.GOOS == "darwin" {
