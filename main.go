@@ -90,6 +90,7 @@ func run(args []string) {
 		"notes":    controllers.NewNotesController(notes, notes, projects, selector),
 		"list":     controllers.NewListController(projects),
 		"help":     controllers.NewHelpController(),
+		"llm":      controllers.NewLlmController(config),
 		"health":   controllers.NewHealthController(health),
 		"worktree": controllers.NewWorktreeController(worktree, selector, sessionProvider),
 		"wt":       controllers.NewWorktreeController(worktree, selector, sessionProvider),

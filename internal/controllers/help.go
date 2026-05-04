@@ -23,6 +23,7 @@ Commands
   rm        Remove a project from your machine
   worktree  Manage git worktrees -- run 'projman wt help' for details (alias: wt)
   health    Verify required dependencies are installed
+  llm       Output a walkthrough of projman for AI agents
   help      Show this menu
 `
 
