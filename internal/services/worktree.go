@@ -10,10 +10,16 @@ import (
 	"sync"
 )
 
-type WorktreeService struct{}
+type worktreeConfig interface {
+	WorktreeCopyExcludes() []string
+}
 
-func NewWorktreeService() WorktreeService {
-	return WorktreeService{}
+type WorktreeService struct {
+	config worktreeConfig
+}
+
+func NewWorktreeService(config worktreeConfig) WorktreeService {
+	return WorktreeService{config: config}
 }
 
 func (s WorktreeService) IsGitRepo(dir string) bool {

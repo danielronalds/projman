@@ -8,6 +8,14 @@ import (
 	"testing"
 )
 
+type fakeWorktreeConfig struct {
+	excludes []string
+}
+
+func (f fakeWorktreeConfig) WorktreeCopyExcludes() []string {
+	return f.excludes
+}
+
 func TestSanitiseForDirectory(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -39,7 +47,7 @@ func TestIsGitRepo(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	t.Run("insideGitRepo", func(t *testing.T) {
 		cwd, _ := os.Getwd()
@@ -60,7 +68,7 @@ func TestMainWorktreePath(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	cwd, _ := os.Getwd()
 	got, err := s.MainWorktreePath(cwd)
@@ -99,7 +107,7 @@ func TestCreateWorktree(t *testing.T) {
 	run(repoDir, "git", "config", "user.name", "Test")
 	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	t.Run("simpleWorktree", func(t *testing.T) {
 		path, err := s.CreateWorktree(repoDir, "test-branch")
@@ -177,7 +185,7 @@ func TestListWorktrees(t *testing.T) {
 	run(repoDir, "git", "config", "user.name", "Test")
 	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	t.Run("onlyBase", func(t *testing.T) {
 		names, err := s.ListWorktrees(repoDir)
@@ -253,7 +261,7 @@ func TestWorktreePath(t *testing.T) {
 	run(repoDir, "git", "config", "user.name", "Test")
 	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 	if _, err := s.CreateWorktree(repoDir, "feature-one"); err != nil {
 		t.Fatalf("CreateWorktree() error = %v", err)
 	}
@@ -322,7 +330,7 @@ func TestListRemoteBranches(t *testing.T) {
 	}
 
 	repoDir, _ := setupRemoteAndClone(t)
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	t.Run("includesRemoteBranches", func(t *testing.T) {
 		branches, err := s.ListRemoteBranches(repoDir)
@@ -359,7 +367,7 @@ func TestCheckoutWorktree(t *testing.T) {
 	}
 
 	repoDir, tmpDir := setupRemoteAndClone(t)
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	t.Run("checkoutRemoteBranch", func(t *testing.T) {
 		path, err := s.CheckoutWorktree(repoDir, "origin/feature/test-branch")
@@ -425,7 +433,7 @@ func TestRemoveWorktree(t *testing.T) {
 	run(repoDir, "git", "config", "user.name", "Test")
 	run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	t.Run("removeWorktree", func(t *testing.T) {
 		worktreePath, err := s.CreateWorktree(repoDir, "feature-to-remove")
@@ -459,7 +467,7 @@ func TestCopyIgnoredFiles(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	s := NewWorktreeService()
+	s := NewWorktreeService(fakeWorktreeConfig{})
 
 	type testHelpers struct {
 		run   func(dir string, args ...string)
@@ -593,4 +601,123 @@ func TestCopyIgnoredFiles(t *testing.T) {
 			t.Fatalf("cache.tmp content = %q, want %q", string(content), "cached")
 		}
 	})
+}
+
+func TestCopyIgnoredFilesExcludes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	tests := []struct {
+		name        string
+		excludes    []string
+		gitignore   string
+		seedFiles   map[string]string
+		seedDirs    []string
+		wantCopied  []string
+		wantSkipped []string
+	}{
+		{
+			name:      "topLevelPatternExcludesOnlyTopLevel",
+			excludes:  []string{"node_modules"},
+			gitignore: "node_modules/\n",
+			seedFiles: map[string]string{
+				"node_modules/pkg/index.js":          "top",
+				"frontend/node_modules/pkg/index.js": "nested",
+			},
+			seedDirs:    []string{"node_modules/pkg", "frontend/node_modules/pkg"},
+			wantSkipped: []string{"node_modules/pkg/index.js"},
+			wantCopied:  []string{"frontend/node_modules/pkg/index.js"},
+		},
+		{
+			name:      "doublestarExcludesAtAnyDepth",
+			excludes:  []string{"**/node_modules"},
+			gitignore: "node_modules/\n",
+			seedFiles: map[string]string{
+				"node_modules/pkg/index.js":          "top",
+				"frontend/node_modules/pkg/index.js": "nested",
+			},
+			seedDirs: []string{"node_modules/pkg", "frontend/node_modules/pkg"},
+			wantSkipped: []string{
+				"node_modules/pkg/index.js",
+				"frontend/node_modules/pkg/index.js",
+			},
+		},
+		{
+			name:      "globExtensionMatchesTopLevelOnly",
+			excludes:  []string{"*.log"},
+			gitignore: "*.log\n",
+			seedFiles: map[string]string{
+				"foo.log":        "top",
+				"nested/bar.log": "nested",
+			},
+			seedDirs:    []string{"nested"},
+			wantSkipped: []string{"foo.log"},
+			wantCopied:  []string{"nested/bar.log"},
+		},
+	}
+
+	run := func(t *testing.T, dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
+			repoDir := filepath.Join(tmpDir, "myproject")
+			if err := os.MkdirAll(repoDir, 0755); err != nil {
+				t.Fatalf("failed to create repo dir: %v", err)
+			}
+
+			run(t, repoDir, "git", "init")
+			run(t, repoDir, "git", "config", "user.email", "test@test.com")
+			run(t, repoDir, "git", "config", "user.name", "Test")
+			run(t, repoDir, "git", "commit", "--allow-empty", "-m", "initial")
+
+			if err := os.WriteFile(filepath.Join(repoDir, ".gitignore"), []byte(tc.gitignore), 0644); err != nil {
+				t.Fatalf("write .gitignore: %v", err)
+			}
+			run(t, repoDir, "git", "add", ".gitignore")
+			run(t, repoDir, "git", "commit", "-m", "add gitignore")
+
+			for _, d := range tc.seedDirs {
+				if err := os.MkdirAll(filepath.Join(repoDir, d), 0755); err != nil {
+					t.Fatalf("mkdir %s: %v", d, err)
+				}
+			}
+			for path, content := range tc.seedFiles {
+				if err := os.WriteFile(filepath.Join(repoDir, path), []byte(content), 0644); err != nil {
+					t.Fatalf("write %s: %v", path, err)
+				}
+			}
+
+			worktreePath := filepath.Join(tmpDir, "myproject-test")
+			if err := os.MkdirAll(worktreePath, 0755); err != nil {
+				t.Fatalf("mkdir worktree: %v", err)
+			}
+
+			s := NewWorktreeService(fakeWorktreeConfig{excludes: tc.excludes})
+			warnings := s.CopyIgnoredFiles(repoDir, worktreePath)
+			if len(warnings) != 0 {
+				t.Fatalf("expected no warnings, got %v", warnings)
+			}
+
+			for _, path := range tc.wantCopied {
+				if _, err := os.Stat(filepath.Join(worktreePath, path)); err != nil {
+					t.Errorf("expected %s to be copied, got error: %v", path, err)
+				}
+			}
+			for _, path := range tc.wantSkipped {
+				if _, err := os.Stat(filepath.Join(worktreePath, path)); !os.IsNotExist(err) {
+					t.Errorf("expected %s to be skipped, but it exists (err=%v)", path, err)
+				}
+			}
+		})
+	}
 }

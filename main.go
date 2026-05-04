@@ -62,7 +62,7 @@ func run(args []string) {
 	creater := services.NewCreaterService(config)
 	health := services.NewHealthService()
 	git := services.NewGitService()
-	worktree := services.NewWorktreeService()
+	worktree := services.NewWorktreeService(config)
 	notes := services.NewNotesService(config, notesRepo)
 
 	sanitiser := services.NewSanitiser()

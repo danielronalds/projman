@@ -2,7 +2,10 @@ module github.com/danielronalds/projman
 
 go 1.24.2
 
-require github.com/koki-develop/go-fzf v0.15.0
+require (
+	github.com/bmatcuk/doublestar/v4 v4.10.0
+	github.com/koki-develop/go-fzf v0.15.0
+)
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
