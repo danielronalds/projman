@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 
@@ -182,21 +183,15 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 	}
 
 	excludes := s.config.WorktreeCopyExcludes()
-	filtered := paths[:0]
-	for _, p := range paths {
+	paths = slices.DeleteFunc(paths, func(p string) bool {
 		matchPath := strings.TrimSuffix(p, "/")
-		skip := false
 		for _, pattern := range excludes {
 			if matched, _ := doublestar.Match(pattern, matchPath); matched {
-				skip = true
-				break
+				return true
 			}
 		}
-		if !skip {
-			filtered = append(filtered, p)
-		}
-	}
-	paths = filtered
+		return false
+	})
 
 	var warnings []string
 	var mu sync.Mutex
