@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
 type worktreeConfig interface {
@@ -178,6 +180,23 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 	if err != nil {
 		return []string{fmt.Sprintf("listing ignored files: %v", err)}
 	}
+
+	excludes := s.config.WorktreeCopyExcludes()
+	filtered := paths[:0]
+	for _, p := range paths {
+		matchPath := strings.TrimSuffix(p, "/")
+		skip := false
+		for _, pattern := range excludes {
+			if matched, _ := doublestar.Match(pattern, matchPath); matched {
+				skip = true
+				break
+			}
+		}
+		if !skip {
+			filtered = append(filtered, p)
+		}
+	}
+	paths = filtered
 
 	var warnings []string
 	var mu sync.Mutex

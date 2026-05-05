@@ -609,18 +609,22 @@ func TestCopyIgnoredFilesExcludes(t *testing.T) {
 	}
 
 	tests := []struct {
-		name        string
-		excludes    []string
-		gitignore   string
-		seedFiles   map[string]string
-		seedDirs    []string
-		wantCopied  []string
-		wantSkipped []string
+		name         string
+		excludes     []string
+		gitignore    string
+		trackedFiles map[string]string
+		seedFiles    map[string]string
+		seedDirs     []string
+		wantCopied   []string
+		wantSkipped  []string
 	}{
 		{
 			name:      "topLevelPatternExcludesOnlyTopLevel",
 			excludes:  []string{"node_modules"},
 			gitignore: "node_modules/\n",
+			trackedFiles: map[string]string{
+				"frontend/app.js": "tracked",
+			},
 			seedFiles: map[string]string{
 				"node_modules/pkg/index.js":          "top",
 				"frontend/node_modules/pkg/index.js": "nested",
@@ -633,6 +637,9 @@ func TestCopyIgnoredFilesExcludes(t *testing.T) {
 			name:      "doublestarExcludesAtAnyDepth",
 			excludes:  []string{"**/node_modules"},
 			gitignore: "node_modules/\n",
+			trackedFiles: map[string]string{
+				"frontend/app.js": "tracked",
+			},
 			seedFiles: map[string]string{
 				"node_modules/pkg/index.js":          "top",
 				"frontend/node_modules/pkg/index.js": "nested",
@@ -647,6 +654,9 @@ func TestCopyIgnoredFilesExcludes(t *testing.T) {
 			name:      "globExtensionMatchesTopLevelOnly",
 			excludes:  []string{"*.log"},
 			gitignore: "*.log\n",
+			trackedFiles: map[string]string{
+				"nested/keep.txt": "tracked",
+			},
 			seedFiles: map[string]string{
 				"foo.log":        "top",
 				"nested/bar.log": "nested",
@@ -683,8 +693,17 @@ func TestCopyIgnoredFilesExcludes(t *testing.T) {
 			if err := os.WriteFile(filepath.Join(repoDir, ".gitignore"), []byte(tc.gitignore), 0644); err != nil {
 				t.Fatalf("write .gitignore: %v", err)
 			}
-			run(t, repoDir, "git", "add", ".gitignore")
-			run(t, repoDir, "git", "commit", "-m", "add gitignore")
+			for path, content := range tc.trackedFiles {
+				full := filepath.Join(repoDir, path)
+				if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
+					t.Fatalf("mkdir for tracked %s: %v", path, err)
+				}
+				if err := os.WriteFile(full, []byte(content), 0644); err != nil {
+					t.Fatalf("write tracked %s: %v", path, err)
+				}
+			}
+			run(t, repoDir, "git", "add", ".")
+			run(t, repoDir, "git", "commit", "-m", "add gitignore + tracked content")
 
 			for _, d := range tc.seedDirs {
 				if err := os.MkdirAll(filepath.Join(repoDir, d), 0755); err != nil {
