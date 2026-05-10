@@ -182,16 +182,17 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 		return []string{fmt.Sprintf("listing ignored files: %v", err)}
 	}
 
-	excludes := s.config.WorktreeCopyExcludes()
-	paths = slices.DeleteFunc(paths, func(p string) bool {
-		matchPath := strings.TrimSuffix(p, "/")
-		for _, pattern := range excludes {
-			if matched, _ := doublestar.Match(pattern, matchPath); matched {
-				return true
+	if excludes := s.config.WorktreeCopyExcludes(); len(excludes) > 0 {
+		paths = slices.DeleteFunc(paths, func(p string) bool {
+			matchPath := strings.TrimSuffix(p, "/")
+			for _, pattern := range excludes {
+				if matched, _ := doublestar.Match(pattern, matchPath); matched {
+					return true
+				}
 			}
-		}
-		return false
-	})
+			return false
+		})
+	}
 
 	var warnings []string
 	var mu sync.Mutex
