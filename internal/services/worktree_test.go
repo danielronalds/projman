@@ -16,6 +16,51 @@ func (f fakeWorktreeConfig) WorktreeCopyExcludes() []string {
 	return f.excludes
 }
 
+type repoTestHelpers struct {
+	run   func(dir string, args ...string)
+	mkdir func(path string)
+	write func(path, content string)
+}
+
+func setupGitRepo(t *testing.T) (repoDir string, tmpDir string, h repoTestHelpers) {
+	t.Helper()
+	tmpDir, _ = filepath.EvalSymlinks(t.TempDir())
+	repoDir = filepath.Join(tmpDir, "myproject")
+	if err := os.MkdirAll(repoDir, 0755); err != nil {
+		t.Fatalf("failed to create repo dir: %v", err)
+	}
+
+	h.run = func(dir string, args ...string) {
+		t.Helper()
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Dir = dir
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("command %v failed: %v\n%s", args, err, output)
+		}
+	}
+
+	h.mkdir = func(path string) {
+		t.Helper()
+		if err := os.MkdirAll(path, 0755); err != nil {
+			t.Fatalf("failed to create directory %s: %v", path, err)
+		}
+	}
+
+	h.write = func(path, content string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(content), 0644); err != nil {
+			t.Fatalf("failed to write file %s: %v", path, err)
+		}
+	}
+
+	h.run(repoDir, "git", "init")
+	h.run(repoDir, "git", "config", "user.email", "test@test.com")
+	h.run(repoDir, "git", "config", "user.name", "Test")
+	h.run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
+	return repoDir, tmpDir, h
+}
+
 func TestSanitiseForDirectory(t *testing.T) {
 	tests := []struct {
 		name  string
@@ -469,53 +514,8 @@ func TestCopyIgnoredFiles(t *testing.T) {
 
 	s := NewWorktreeService(fakeWorktreeConfig{})
 
-	type testHelpers struct {
-		run   func(dir string, args ...string)
-		mkdir func(path string)
-		write func(path, content string)
-	}
-
-	setupRepo := func(t *testing.T) (repoDir string, tmpDir string, h testHelpers) {
-		t.Helper()
-		tmpDir, _ = filepath.EvalSymlinks(t.TempDir())
-		repoDir = filepath.Join(tmpDir, "myproject")
-		if err := os.MkdirAll(repoDir, 0755); err != nil {
-			t.Fatalf("failed to create repo dir: %v", err)
-		}
-
-		h.run = func(dir string, args ...string) {
-			t.Helper()
-			cmd := exec.Command(args[0], args[1:]...)
-			cmd.Dir = dir
-			output, err := cmd.CombinedOutput()
-			if err != nil {
-				t.Fatalf("command %v failed: %v\n%s", args, err, output)
-			}
-		}
-
-		h.mkdir = func(path string) {
-			t.Helper()
-			if err := os.MkdirAll(path, 0755); err != nil {
-				t.Fatalf("failed to create directory %s: %v", path, err)
-			}
-		}
-
-		h.write = func(path, content string) {
-			t.Helper()
-			if err := os.WriteFile(path, []byte(content), 0644); err != nil {
-				t.Fatalf("failed to write file %s: %v", path, err)
-			}
-		}
-
-		h.run(repoDir, "git", "init")
-		h.run(repoDir, "git", "config", "user.email", "test@test.com")
-		h.run(repoDir, "git", "config", "user.name", "Test")
-		h.run(repoDir, "git", "commit", "--allow-empty", "-m", "initial")
-		return repoDir, tmpDir, h
-	}
-
 	t.Run("noGitignore", func(t *testing.T) {
-		repoDir, tmpDir, h := setupRepo(t)
+		repoDir, tmpDir, h := setupGitRepo(t)
 		worktreePath := filepath.Join(tmpDir, "myproject-test")
 
 		h.mkdir(worktreePath)
@@ -526,7 +526,7 @@ func TestCopyIgnoredFiles(t *testing.T) {
 	})
 
 	t.Run("ignoredFileCopied", func(t *testing.T) {
-		repoDir, tmpDir, h := setupRepo(t)
+		repoDir, tmpDir, h := setupGitRepo(t)
 
 		h.write(filepath.Join(repoDir, ".gitignore"), "*.log\n")
 		h.write(filepath.Join(repoDir, "debug.log"), "log content")
@@ -551,7 +551,7 @@ func TestCopyIgnoredFiles(t *testing.T) {
 	})
 
 	t.Run("ignoredDirectoryCopied", func(t *testing.T) {
-		repoDir, tmpDir, h := setupRepo(t)
+		repoDir, tmpDir, h := setupGitRepo(t)
 
 		h.write(filepath.Join(repoDir, ".gitignore"), "node_modules/\n")
 		h.mkdir(filepath.Join(repoDir, "node_modules", "pkg"))
@@ -577,7 +577,7 @@ func TestCopyIgnoredFiles(t *testing.T) {
 	})
 
 	t.Run("nestedGitignore", func(t *testing.T) {
-		repoDir, tmpDir, h := setupRepo(t)
+		repoDir, tmpDir, h := setupGitRepo(t)
 
 		h.mkdir(filepath.Join(repoDir, "subdir"))
 		h.write(filepath.Join(repoDir, "subdir", ".gitignore"), "*.tmp\n")
@@ -667,59 +667,28 @@ func TestCopyIgnoredFilesExcludes(t *testing.T) {
 		},
 	}
 
-	run := func(t *testing.T, dir string, args ...string) {
-		t.Helper()
-		cmd := exec.Command(args[0], args[1:]...)
-		cmd.Dir = dir
-		output, err := cmd.CombinedOutput()
-		if err != nil {
-			t.Fatalf("command %v failed: %v\n%s", args, err, output)
-		}
-	}
-
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			tmpDir, _ := filepath.EvalSymlinks(t.TempDir())
-			repoDir := filepath.Join(tmpDir, "myproject")
-			if err := os.MkdirAll(repoDir, 0755); err != nil {
-				t.Fatalf("failed to create repo dir: %v", err)
-			}
+			repoDir, tmpDir, h := setupGitRepo(t)
 
-			run(t, repoDir, "git", "init")
-			run(t, repoDir, "git", "config", "user.email", "test@test.com")
-			run(t, repoDir, "git", "config", "user.name", "Test")
-			run(t, repoDir, "git", "commit", "--allow-empty", "-m", "initial")
-
-			if err := os.WriteFile(filepath.Join(repoDir, ".gitignore"), []byte(tc.gitignore), 0644); err != nil {
-				t.Fatalf("write .gitignore: %v", err)
-			}
+			h.write(filepath.Join(repoDir, ".gitignore"), tc.gitignore)
 			for path, content := range tc.trackedFiles {
 				full := filepath.Join(repoDir, path)
-				if err := os.MkdirAll(filepath.Dir(full), 0755); err != nil {
-					t.Fatalf("mkdir for tracked %s: %v", path, err)
-				}
-				if err := os.WriteFile(full, []byte(content), 0644); err != nil {
-					t.Fatalf("write tracked %s: %v", path, err)
-				}
+				h.mkdir(filepath.Dir(full))
+				h.write(full, content)
 			}
-			run(t, repoDir, "git", "add", ".")
-			run(t, repoDir, "git", "commit", "-m", "add gitignore + tracked content")
+			h.run(repoDir, "git", "add", ".")
+			h.run(repoDir, "git", "commit", "-m", "add gitignore + tracked content")
 
 			for _, d := range tc.seedDirs {
-				if err := os.MkdirAll(filepath.Join(repoDir, d), 0755); err != nil {
-					t.Fatalf("mkdir %s: %v", d, err)
-				}
+				h.mkdir(filepath.Join(repoDir, d))
 			}
 			for path, content := range tc.seedFiles {
-				if err := os.WriteFile(filepath.Join(repoDir, path), []byte(content), 0644); err != nil {
-					t.Fatalf("write %s: %v", path, err)
-				}
+				h.write(filepath.Join(repoDir, path), content)
 			}
 
 			worktreePath := filepath.Join(tmpDir, "myproject-test")
-			if err := os.MkdirAll(worktreePath, 0755); err != nil {
-				t.Fatalf("mkdir worktree: %v", err)
-			}
+			h.mkdir(worktreePath)
 
 			s := NewWorktreeService(fakeWorktreeConfig{excludes: tc.excludes})
 			warnings := s.CopyIgnoredFiles(repoDir, worktreePath)
@@ -729,12 +698,12 @@ func TestCopyIgnoredFilesExcludes(t *testing.T) {
 
 			for _, path := range tc.wantCopied {
 				if _, err := os.Stat(filepath.Join(worktreePath, path)); err != nil {
-					t.Errorf("expected %s to be copied, got error: %v", path, err)
+					t.Fatalf("expected %s to be copied, got error: %v", path, err)
 				}
 			}
 			for _, path := range tc.wantSkipped {
 				if _, err := os.Stat(filepath.Join(worktreePath, path)); !os.IsNotExist(err) {
-					t.Errorf("expected %s to be skipped, but it exists (err=%v)", path, err)
+					t.Fatalf("expected %s to be skipped, but it exists (err=%v)", path, err)
 				}
 			}
 		})
