@@ -2,31 +2,13 @@
 
 A CLI tool for managing projects on your local machine. projman helps you quickly create, open, and manage your dev projects with integrated session management via tmux or VS Code.
 
-## Installation
-
-### Prerequisites
-
-- Go 1.24.2 or later
-- `tmux` for the tmux session provider (default)
-- `code` for the VS Code session provider
-- `gh` for remote repository management
-- `git` for repository operations
-
-Run `projman health` to verify your environment.
-
-### Install from source
+## Install
 
 ```console
 go install github.com/danielronalds/projman@latest
 ```
 
-### Build locally
-
-```console
-git clone https://github.com/danielronalds/projman.git
-cd projman
-go build -o projman .
-```
+See the [GitHub repo](https://github.com/danielronalds/projman) for prerequisites and build-from-source instructions.
 
 ## Quickstart
 
@@ -59,21 +41,7 @@ Commands
 
 `--provider, -p <provider>` overrides the configured session provider for a single invocation (`tmux` or `vscode`).
 
-### Removing projects
+## Next
 
-`projman rm` checks for uncommitted git changes before deleting. Pass `--without-git-check` to bypass.
-
-```console
-projman rm              # fuzzy select a project to remove
-projman rm my-project   # remove a named project directly
-```
-
-## Documentation
-
-- [Configuration](docs/configuration.md) -- config file, session providers, templates
-- [Worktrees](docs/worktrees.md) -- `projman wt` subcommands
-- [Contributing](CONTRIBUTING.md) -- development setup, tasks, CI
-
-## License
-
-MIT - see [LICENSE](LICENSE).
+- [Configuration](configuration.md) -- config file, session providers, templates
+- [Worktrees](worktrees.md) -- `projman wt` subcommands

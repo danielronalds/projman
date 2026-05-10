@@ -47,3 +47,11 @@ run = "bash scripts/clean.sh"
 [tasks."update:readme"]
 description = "Updates the README help block with current output"
 run = "bash scripts/update-readme-help.sh"
+
+[tasks."docs:serve"]
+description = "Preview the docs site locally with live reload"
+run = "uvx --with mkdocs-material mkdocs serve"
+
+[tasks."docs:build"]
+description = "Build the static docs site to ./site"
+run = "uvx --with mkdocs-material mkdocs build"
