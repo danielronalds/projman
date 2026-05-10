@@ -111,6 +111,32 @@ projman uses a JSON configuration file located at `~/.config/projman/config.json
 | `session_provider` | string | `"tmux"` | Session provider to use (`tmux` or `vscode`) |
 | `tmux.windows` | array | `["CLI", "Code", "Server"]` | Names of tmux windows to create |
 | `tmux.starting_window` | number | `2` | Which window to start in |
+| `worktree_copy_excludes` | array | `[]` | Glob patterns to skip when copying gitignored files into a new worktree |
+
+### Worktree copy excludes
+
+When `projman worktree new` or `projman worktree checkout` prompts to copy
+ignored files into the new worktree, any path matching one of the
+`worktree_copy_excludes` patterns is skipped. This is useful for very large
+ignored directories (such as `node_modules` or build outputs) that you would
+rather rebuild than copy.
+
+Patterns use [doublestar](https://github.com/bmatcuk/doublestar) glob syntax,
+matched against paths returned by `git ls-files` (relative to the repository
+root):
+
+```json
+{
+  "worktree_copy_excludes": ["**/node_modules", "dist", "*.log"]
+}
+```
+
+- `node_modules` matches only the top-level `node_modules` directory
+- `**/node_modules` matches `node_modules` at any depth
+- `*.log` matches top-level log files
+- `**/*.log` matches log files at any depth
+
+Invalid patterns cause projman to exit at startup with an error.
 
 ## Session Providers
 

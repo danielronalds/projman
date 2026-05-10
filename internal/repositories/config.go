@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/bmatcuk/doublestar/v4"
 	"github.com/danielronalds/projman/internal/services"
 )
 
@@ -32,15 +33,16 @@ func (t template) GetCommands() []string {
 }
 
 type config struct {
-	Theme           string        `json:"theme"`
-	Layout          string        `json:"layout"`
-	ProjectDirs     []string      `json:"projectDirs"`
-	OpenNewProjects bool          `json:"openNewProjects"`
-	Templates       []template    `json:"templates"`
-	SessionProvider string        `json:"session_provider"`
-	Tmux            tmuxConfig    `json:"tmux"`
-	VSCode          vsCodeConfig  `json:"vscode"`
-	SessionLayout   sessionLayout `json:"session_layout,omitempty"`
+	Theme                string        `json:"theme"`
+	Layout               string        `json:"layout"`
+	ProjectDirs          []string      `json:"projectDirs"`
+	OpenNewProjects      bool          `json:"openNewProjects"`
+	Templates            []template    `json:"templates"`
+	SessionProvider      string        `json:"session_provider"`
+	Tmux                 tmuxConfig    `json:"tmux"`
+	VSCode               vsCodeConfig  `json:"vscode"`
+	SessionLayout        sessionLayout `json:"session_layout"`
+	WorktreeCopyExcludes []string      `json:"worktree_copy_excludes"`
 }
 
 type ConfigRepository struct {
@@ -59,7 +61,8 @@ func NewConfigRepository() ConfigRepository {
 			Windows:        []string{"CLI", "Code", "Server"},
 			StartingWindow: 2,
 		},
-		VSCode: vsCodeConfig{},
+		VSCode:               vsCodeConfig{},
+		WorktreeCopyExcludes: []string{},
 	}
 
 	homeDir := getHomeDir()
@@ -79,6 +82,13 @@ func NewConfigRepository() ConfigRepository {
 		fmt.Fprintf(os.Stderr, "Error: 'session_layout' is deprecated and no longer supported.\n")
 		fmt.Fprintf(os.Stderr, "Please move your config to the 'tmux' block. See README.md for details.\n")
 		os.Exit(1)
+	}
+
+	for _, p := range conf.WorktreeCopyExcludes {
+		if !doublestar.ValidatePattern(p) {
+			fmt.Fprintf(os.Stderr, "Invalid worktree_copy_excludes pattern: %q\n", p)
+			os.Exit(1)
+		}
 	}
 
 	if conf.SessionProvider == "" {
@@ -150,6 +160,10 @@ func (r ConfigRepository) SessionWindows() []string {
 
 func (r ConfigRepository) StartingWindow() int {
 	return r.conf.Tmux.StartingWindow
+}
+
+func (r ConfigRepository) WorktreeCopyExcludes() []string {
+	return r.conf.WorktreeCopyExcludes
 }
 
 func (r ConfigRepository) ConfigFilePath() string {

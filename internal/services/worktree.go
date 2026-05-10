@@ -6,14 +6,23 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
+
+	"github.com/bmatcuk/doublestar/v4"
 )
 
-type WorktreeService struct{}
+type worktreeConfig interface {
+	WorktreeCopyExcludes() []string
+}
 
-func NewWorktreeService() WorktreeService {
-	return WorktreeService{}
+type WorktreeService struct {
+	config worktreeConfig
+}
+
+func NewWorktreeService(config worktreeConfig) WorktreeService {
+	return WorktreeService{config: config}
 }
 
 func (s WorktreeService) IsGitRepo(dir string) bool {
@@ -171,6 +180,18 @@ func (s WorktreeService) CopyIgnoredFiles(mainPath, worktreePath string) []strin
 	paths, err := listIgnoredPaths(mainPath)
 	if err != nil {
 		return []string{fmt.Sprintf("listing ignored files: %v", err)}
+	}
+
+	if excludes := s.config.WorktreeCopyExcludes(); len(excludes) > 0 {
+		paths = slices.DeleteFunc(paths, func(p string) bool {
+			matchPath := strings.TrimSuffix(p, "/")
+			for _, pattern := range excludes {
+				if matched, _ := doublestar.Match(pattern, matchPath); matched {
+					return true
+				}
+			}
+			return false
+		})
 	}
 
 	var warnings []string
